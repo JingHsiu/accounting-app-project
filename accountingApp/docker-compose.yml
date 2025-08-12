@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: accounting-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: accountingdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      # 將 schema.sql 掛載到 PostgreSQL 初始化目錄
+      - ./internal/accounting/frameworks/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      # 持久化資料庫資料
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d accountingdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # 可選: pgAdmin 管理介面
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: accounting-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@accounting.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8081:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - admin  # 使用 profile 讓這個服務可選
+
+volumes:
+  postgres_data:
+    driver: local

@@ -1,0 +1,173 @@
+# DocumentationAgent 配置檔案
+# 智能文檔追蹤 AI Agent 的配置設定
+
+# 監控路徑 - Agent 會掃描這些路徑下的檔案
+monitor_paths:
+  - "internal/accounting/adapter/controller"     # HTTP 控制器
+  - "internal/accounting/application/command"    # 命令處理器
+  - "internal/accounting/application/query"      # 查詢處理器
+  - "internal/accounting/domain/model"           # 領域模型
+  - "internal/accounting/frameworks/database"    # 資料庫相關
+
+# 忽略路徑和檔案模式
+ignore_paths:
+  - "*_test.go"           # 測試檔案
+  - "mock_*.go"          # Mock 檔案
+  - "fake*.go"           # Fake 實作
+  - "vendor/"            # 第三方套件
+  - ".git/"              # Git 目錄
+  - "*.tmp"              # 暫存檔案
+  - "*.backup"           # 備份檔案
+
+# 輸出格式配置
+output_format: "json"     # json, yaml, markdown
+
+# 是否自動更新文檔
+update_docs: true
+
+# 文檔檔案路徑
+doc_files:
+  claude_file: "CLAUDE.md"
+  status_file: "docs/PROJECT-STATUS.md"
+  readme_file: "README.md"
+  analysis_file: "docs/analysis-result.json"
+
+# API 端點檢測設定
+api_detection:
+  # HTTP 方法對應表
+  method_mapping:
+    "Create": "POST"
+    "Get": "GET"
+    "Update": "PUT"
+    "Delete": "DELETE"
+    "List": "GET"
+    "Add": "POST"
+    "Remove": "DELETE"
+    "Find": "GET"
+  
+  # 路徑推測規則
+  path_patterns:
+    "wallet": "/api/v1/wallets"
+    "category": "/api/v1/categories"
+    "expense": "/api/v1/expenses"
+    "income": "/api/v1/incomes"
+  
+  # 控制器識別模式
+  controller_patterns:
+    - "*Controller"
+    - "*Handler"
+
+# Domain Model 分析設定
+domain_model_analysis:
+  # 聚合識別關鍵字
+  aggregate_keywords:
+    - "Aggregate"
+    - "Wallet"
+    - "ExpenseCategory"
+    - "IncomeCategory"
+  
+  # 實體識別關鍵字
+  entity_keywords:
+    - "Record"
+    - "Entity"
+    - "Subcategory"
+  
+  # 值對象識別關鍵字
+  value_object_keywords:
+    - "Money"
+    - "Currency"
+    - "Name"
+    - "ID"
+
+# Use Case 分析設定
+use_case_analysis:
+  # 命令處理器模式
+  command_patterns:
+    - "*Service"
+    - "*Command"
+    - "Create*"
+    - "Add*"
+    - "Update*"
+    - "Delete*"
+  
+  # 查詢處理器模式
+  query_patterns:
+    - "*Query"
+    - "Get*"
+    - "Find*"
+    - "List*"
+
+# 資料庫分析設定
+database_analysis:
+  # 支援的 SQL 檔案
+  sql_files:
+    - "*.sql"
+    - "schema.sql"
+    - "migration*.sql"
+  
+  # 關鍵字檢測
+  ddl_keywords:
+    - "CREATE TABLE"
+    - "ALTER TABLE" 
+    - "DROP TABLE"
+    - "CREATE INDEX"
+    - "DROP INDEX"
+
+# 文檔更新設定
+doc_update_settings:
+  # 備份原始檔案
+  create_backup: true
+  
+  # 更新標記
+  update_markers:
+    last_updated: "最後更新"
+    auto_generated: "🤖 自動生成"
+    analysis_timestamp: "分析時間"
+  
+  # 更新區段
+  update_sections:
+    claude_md:
+      - "最近變更"
+      - "已完成功能"
+      - "待辦事項"
+    
+    status_md:
+      - "最後更新"
+      - "整體狀態"
+      - "功能狀態表格"
+    
+    readme_md:
+      - "API 文檔"
+      - "功能特色"
+
+# 日誌設定
+logging:
+  level: "info"           # debug, info, warn, error
+  output: "console"       # console, file
+  file_path: "logs/doc-agent.log"
+
+# 效能設定
+performance:
+  # 最大同時處理檔案數
+  max_concurrent_files: 10
+  
+  # 檔案大小限制 (bytes)
+  max_file_size: 1048576  # 1MB
+  
+  # 分析逾時時間 (秒)
+  analysis_timeout: 30
+
+# 進階設定
+advanced:
+  # 啟用實驗性功能
+  experimental_features: false
+  
+  # 深度分析模式
+  deep_analysis: true
+  
+  # 快取分析結果
+  enable_cache: true
+  cache_duration: 3600    # 1小時
+  
+  # 增量分析 (只分析變更的檔案)
+  incremental_analysis: true
