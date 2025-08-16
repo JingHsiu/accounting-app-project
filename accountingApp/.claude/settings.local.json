@@ -6,7 +6,8 @@
       "Bash(rm:*)",
       "Bash(go build:*)",
       "Bash(go test:*)",
-      "Bash(./scripts/update-docs.sh:*)"
+      "Bash(./scripts/update-docs.sh:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }
