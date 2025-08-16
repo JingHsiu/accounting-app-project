@@ -27,6 +27,9 @@ type WalletRepositoryPeer interface {
 	// FindDataByID 根據ID查找錢包資料結構
 	FindDataByID(id string) (*mapper.WalletData, error)
 
+	// FindDataByUserID 根據UserID查找用戶的所有錢包資料結構
+	FindDataByUserID(userID string) ([]mapper.WalletData, error)
+
 	// DeleteData 根據ID刪除錢包資料
 	DeleteData(id string) error
 }

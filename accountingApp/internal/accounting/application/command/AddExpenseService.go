@@ -47,6 +47,13 @@ func (s *AddExpenseService) Execute(input AddExpenseInput) common.Output {
 			Message:  fmt.Sprintf("category not found: %v", err),
 		}
 	}
+	
+	if category == nil {
+		return common.UseCaseOutput{
+			ExitCode: common.Failure,
+			Message:  "Subcategory not found in any category",
+		}
+	}
 
 	// 透過聚合根驗證子分類存在性
 	err = category.ValidateSubcategoryExists(input.SubcategoryID)

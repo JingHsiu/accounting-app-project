@@ -53,7 +53,6 @@ func (r *WalletRepositoryImpl) Delete(id string) error {
 }
 
 // FindByIDWithTransactions 根據ID查找錢包及所有交易記錄 (載入完整聚合)
-// 使用Inquiry來載入交易記錄，而不修改Repository基本CRUD介面
 func (r *WalletRepositoryImpl) FindByIDWithTransactions(id string) (*model.Wallet, error) {
 	// 1. 透過基本Repository方法取得錢包
 	wallet, err := r.FindByID(id)
@@ -61,20 +60,41 @@ func (r *WalletRepositoryImpl) FindByIDWithTransactions(id string) (*model.Walle
 		return wallet, err
 	}
 
-	// 2. 使用Inquiry載入交易記錄 (透過第三層直接查詢)
-	// TODO: 需要實作WalletInquiry來載入交易記錄
-	// 暫時標記為已載入，避免編譯錯誤
+	// 2. 載入交易記錄 (從相關的交易表中查詢)
+	// TODO: 實際實作需要查詢 expenses, incomes, transfers 表
+	// 目前先標記為已載入，避免編譯錯誤
+	// 
+	// 未來的實作應該包含:
+	// - 查詢 expenses 表: WHERE wallet_id = $1
+	// - 查詢 incomes 表: WHERE wallet_id = $1  
+	// - 查詢 transfers 表: WHERE from_wallet_id = $1 OR to_wallet_id = $1
+	// - 將查詢結果透過 mapper 轉換成 domain model
+	// - 使用 wallet.AddExpenseRecord(), wallet.AddIncomeRecord(), wallet.AddTransfer() 載入
+	
 	wallet.SetFullyLoaded(true)
 
 	return wallet, nil
 }
 
 // FindByUserID 根據UserID查找用戶的所有錢包
-// 使用Inquiry實作，不修改基本Repository介面
 func (r *WalletRepositoryImpl) FindByUserID(userID string) ([]*model.Wallet, error) {
-	// TODO: 使用Inquiry查詢用戶的所有錢包
-	// 暫時返回空切片，避免編譯錯誤
-	return make([]*model.Wallet, 0), nil
+	// 透過peer介面從第四層取得資料
+	dataList, err := r.peer.FindDataByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 將資料結構轉換為Domain Model
+	wallets := make([]*model.Wallet, len(dataList))
+	for i, data := range dataList {
+		wallet, err := r.mapper.ToDomain(data)
+		if err != nil {
+			return nil, err
+		}
+		wallets[i] = wallet
+	}
+	
+	return wallets, nil
 }
 
 // SaveData 實現WalletRepositoryPeer介面 - 直接委派給peer
@@ -85,6 +105,11 @@ func (r *WalletRepositoryImpl) SaveData(data mapper.WalletData) error {
 // FindDataByID 實現WalletRepositoryPeer介面 - 直接委派給peer
 func (r *WalletRepositoryImpl) FindDataByID(id string) (*mapper.WalletData, error) {
 	return r.peer.FindDataByID(id)
+}
+
+// FindDataByUserID 實現WalletRepositoryPeer介面 - 直接委派給peer
+func (r *WalletRepositoryImpl) FindDataByUserID(userID string) ([]mapper.WalletData, error) {
+	return r.peer.FindDataByUserID(userID)
 }
 
 // DeleteData 實現WalletRepositoryPeer介面 - 直接委派給peer

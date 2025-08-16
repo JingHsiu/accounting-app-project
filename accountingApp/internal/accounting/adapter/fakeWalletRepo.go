@@ -62,3 +62,40 @@ func (f *fakeWalletRepo) FindDataByID(id string) (*mapper.WalletData, error) {
 func (f *fakeWalletRepo) DeleteData(id string) error {
 	return f.Delete(id)
 }
+
+// Add missing methods required by WalletRepository interface
+func (f *fakeWalletRepo) FindByIDWithTransactions(id string) (*model.Wallet, error) {
+	wallet, err := f.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if wallet != nil {
+		wallet.SetFullyLoaded(true)
+	}
+	return wallet, nil
+}
+
+func (f *fakeWalletRepo) FindByUserID(userID string) ([]*model.Wallet, error) {
+	var wallets []*model.Wallet
+	for _, wallet := range f.data {
+		if wallet.UserID == userID {
+			wallets = append(wallets, wallet)
+		}
+	}
+	return wallets, nil
+}
+
+func (f *fakeWalletRepo) FindDataByUserID(userID string) ([]mapper.WalletData, error) {
+	wallets, err := f.FindByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	
+	var dataList []mapper.WalletData
+	walletMapper := mapper.NewWalletMapper()
+	for _, wallet := range wallets {
+		data := walletMapper.ToData(wallet)
+		dataList = append(dataList, data)
+	}
+	return dataList, nil
+}

@@ -92,6 +92,17 @@ func (m *MockExpenseCategoryRepository) DeleteData(id string) error {
 	return m.Delete(id)
 }
 
+// Add missing method required by ExpenseCategoryRepository interface
+func (m *MockExpenseCategoryRepository) FindByUserID(userID string) ([]*model.ExpenseCategory, error) {
+	var categories []*model.ExpenseCategory
+	for _, category := range m.categories {
+		if category.UserID == userID {
+			categories = append(categories, category)
+		}
+	}
+	return categories, nil
+}
+
 // MockWalletRepository 模擬錢包儲存庫
 type MockWalletRepository struct {
 	wallets map[string]*model.Wallet
@@ -149,6 +160,43 @@ func (m *MockWalletRepository) FindDataByID(id string) (*mapper.WalletData, erro
 
 func (m *MockWalletRepository) DeleteData(id string) error {
 	return m.Delete(id)
+}
+
+// Add missing methods required by WalletRepository interface
+func (m *MockWalletRepository) FindByIDWithTransactions(id string) (*model.Wallet, error) {
+	wallet, err := m.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if wallet != nil {
+		wallet.SetFullyLoaded(true)
+	}
+	return wallet, nil
+}
+
+func (m *MockWalletRepository) FindByUserID(userID string) ([]*model.Wallet, error) {
+	var wallets []*model.Wallet
+	for _, wallet := range m.wallets {
+		if wallet.UserID == userID {
+			wallets = append(wallets, wallet)
+		}
+	}
+	return wallets, nil
+}
+
+func (m *MockWalletRepository) FindDataByUserID(userID string) ([]mapper.WalletData, error) {
+	wallets, err := m.FindByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	
+	var dataList []mapper.WalletData
+	walletMapper := mapper.NewWalletMapper()
+	for _, wallet := range wallets {
+		data := walletMapper.ToData(wallet)
+		dataList = append(dataList, data)
+	}
+	return dataList, nil
 }
 
 // TestAddExpenseWithValidation 測試新增支出時的分類驗證

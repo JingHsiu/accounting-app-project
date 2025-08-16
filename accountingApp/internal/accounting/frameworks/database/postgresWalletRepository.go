@@ -65,6 +65,34 @@ func (r *PostgresWalletRepositoryPeer) FindDataByID(id string) (*mapper.WalletDa
 	return &data, nil
 }
 
+// FindDataByUserID 根據UserID查找用戶的所有錢包資料結構 (實現WalletRepositoryPeer介面)
+func (r *PostgresWalletRepositoryPeer) FindDataByUserID(userID string) ([]mapper.WalletData, error) {
+	query := `
+		SELECT id, user_id, name, type, currency, balance_amount, balance_currency, created_at, updated_at
+		FROM wallets WHERE user_id = $1 ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var wallets []mapper.WalletData
+	for rows.Next() {
+		var data mapper.WalletData
+		err := rows.Scan(&data.ID, &data.UserID, &data.Name, &data.Type, &data.Currency,
+			&data.BalanceAmount, &data.BalanceCurrency, &data.CreatedAt, &data.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		wallets = append(wallets, data)
+	}
+
+	return wallets, nil
+}
+
 //
 //func (r *PostgresWalletRepository) FindByUserID(userID string) ([]*model.Wallet, error) {
 //	query := `
