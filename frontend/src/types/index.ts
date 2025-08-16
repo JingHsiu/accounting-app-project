@@ -6,12 +6,14 @@ export interface Money {
 
 export interface Wallet {
   id: string;
-  userID: string;
+  user_id: string;    // Match backend format
   name: string;
   type: WalletType;
   balance: Money;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string; // Match backend format  
+  updated_at: string; // Match backend format
+  currency: string;   // Additional field from backend
+  is_fully_loaded?: boolean; // Additional field from backend
 }
 
 export enum WalletType {

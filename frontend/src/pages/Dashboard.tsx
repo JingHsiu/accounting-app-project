@@ -16,12 +16,14 @@ import { formatMoney } from '@/utils/format'
 const DEMO_USER_ID = "demo-user-123"
 
 const Dashboard: React.FC = () => {
-  // Queries
-  const { data: dashboardData, isLoading: dashboardLoading } = useQuery(
-    ['dashboard', DEMO_USER_ID],
-    () => dashboardService.getDashboardData({ userID: DEMO_USER_ID }),
-    { refetchInterval: 30000 }
-  )
+  // Queries - Dashboard API not implemented yet, so disable for now
+  // const { data: dashboardData, isLoading: dashboardLoading } = useQuery(
+  //   ['dashboard', DEMO_USER_ID],
+  //   () => dashboardService.getDashboardData({ userID: DEMO_USER_ID }),
+  //   { refetchInterval: 30000 }
+  // )
+  const dashboardData = null
+  const dashboardLoading = false
 
   const { data: walletsData } = useQuery(
     ['wallets', DEMO_USER_ID],
@@ -35,7 +37,7 @@ const Dashboard: React.FC = () => {
   // )
 
   const dashboard = dashboardData?.data
-  const wallets = walletsData?.data || []
+  const wallets = Array.isArray(walletsData?.data) ? walletsData.data : []
 
   if (dashboardLoading) {
     return (
