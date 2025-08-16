@@ -22,7 +22,9 @@ const Wallets: React.FC = () => {
   const [editingWallet, setEditingWallet] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    type: WalletType.CASH
+    type: WalletType.CASH,
+    currency: 'TWD',
+    initialBalance: 0
   })
 
   const queryClient = useQueryClient()
@@ -57,7 +59,7 @@ const Wallets: React.FC = () => {
   const wallets = walletsData?.data || []
 
   const resetForm = () => {
-    setFormData({ name: '', type: WalletType.CASH })
+    setFormData({ name: '', type: WalletType.CASH, currency: 'TWD', initialBalance: 0 })
     setEditingWallet(null)
   }
 
@@ -68,8 +70,11 @@ const Wallets: React.FC = () => {
       // TODO: Implement update wallet
     } else {
       createWalletMutation.mutate({
-        ...formData,
-        userID: DEMO_USER_ID
+        name: formData.name,
+        type: formData.type,
+        currency: formData.currency,
+        user_id: DEMO_USER_ID,
+        initialBalance: formData.initialBalance
       })
     }
   }
@@ -94,6 +99,14 @@ const Wallets: React.FC = () => {
     { value: 'BANK', label: '銀行帳戶' },
     { value: 'CREDIT', label: '信用卡' },
     { value: 'INVESTMENT', label: '投資帳戶' }
+  ]
+
+  const currencyOptions = [
+    { value: 'TWD', label: '台幣 (TWD)' },
+    { value: 'USD', label: '美元 (USD)' },
+    { value: 'JPY', label: '日圓 (JPY)' },
+    { value: 'EUR', label: '歐元 (EUR)' },
+    { value: 'CNY', label: '人民幣 (CNY)' }
   ]
 
   if (isLoading) {
@@ -152,7 +165,12 @@ const Wallets: React.FC = () => {
                       size="sm"
                       onClick={() => {
                         setEditingWallet(wallet.id)
-                        setFormData({ name: wallet.name, type: wallet.type })
+                        setFormData({ 
+                          name: wallet.name, 
+                          type: wallet.type, 
+                          currency: wallet.currency || 'TWD',
+                          initialBalance: wallet.balance.amount || 0
+                        })
                         setShowCreateModal(true)
                       }}
                     >
@@ -218,6 +236,24 @@ const Wallets: React.FC = () => {
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value as WalletType })}
             options={walletTypeOptions}
+          />
+
+          <Select
+            label="貨幣"
+            value={formData.currency}
+            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+            options={currencyOptions}
+          />
+
+          <Input
+            label="初始餘額"
+            type="number"
+            value={formData.initialBalance}
+            onChange={(e) => setFormData({ ...formData, initialBalance: Number(e.target.value) })}
+            placeholder="0"
+            step="0.01"
+            min="0"
+            required
           />
           
           <div className="flex gap-2 pt-4">

@@ -8,10 +8,11 @@ import (
 )
 
 type CreateWalletInput struct {
-	UserID   string
-	Name     string
-	Type     string
-	Currency string
+	UserID         string
+	Name           string
+	Type           string
+	Currency       string
+	InitialBalance *int64 // Optional initial balance in cents/smallest currency unit
 }
 
 type CreateWalletService struct {
@@ -31,7 +32,13 @@ func (s *CreateWalletService) Execute(input CreateWalletInput) common.Output {
 		}
 	}
 
-	wallet, err := model.NewWallet(input.UserID, input.Name, parsedType, input.Currency)
+	// Determine initial balance amount
+	var initialBalanceAmount int64 = 0
+	if input.InitialBalance != nil {
+		initialBalanceAmount = *input.InitialBalance
+	}
+
+	wallet, err := model.NewWalletWithInitialBalance(input.UserID, input.Name, parsedType, input.Currency, initialBalanceAmount)
 	if err != nil {
 		return common.UseCaseOutput{
 			ExitCode: common.Failure,

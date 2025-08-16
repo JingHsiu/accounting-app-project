@@ -4,7 +4,9 @@ import type { Wallet, WalletType, Money, ApiResponse } from '@/types'
 export interface CreateWalletRequest {
   name: string
   type: WalletType
-  userID: string
+  currency: string  // Required by backend (ISO 4217 format)
+  user_id: string   // Match backend format
+  initialBalance?: number // Optional initial balance
 }
 
 export interface UpdateWalletRequest {
@@ -15,26 +17,62 @@ export interface UpdateWalletRequest {
 export const walletService = {
   // Get all wallets for a user
   getWallets: async (userID: string): Promise<ApiResponse<Wallet[]>> => {
-    return apiRequest.get<Wallet[]>(`/wallets?userID=${userID}`)
+    try {
+      const response = await fetch(`/api/v1/wallets?userID=${userID}`)
+      const data = await response.json()
+      
+      if (data.success && data.data?.data) {
+        return {
+          success: true,
+          data: data.data.data // Extract wallet array from nested response
+        }
+      }
+      
+      return {
+        success: false,
+        error: data.error || 'Failed to load wallets'
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message
+      }
+    }
   },
 
   // Get a specific wallet with transactions
   getWallet: async (walletID: string): Promise<ApiResponse<Wallet>> => {
-    return apiRequest.get<Wallet>(`/wallets/${walletID}`)
+    const response = await apiRequest.get<{data: Wallet}>(`/wallets/${walletID}`)
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data.data // Extract the nested data
+      }
+    }
+    return response as unknown as ApiResponse<Wallet>
   },
 
   // Create a new wallet
-  createWallet: async (wallet: CreateWalletRequest): Promise<ApiResponse<Wallet>> => {
-    return apiRequest.post<Wallet>('/wallets', wallet)
+  createWallet: async (wallet: CreateWalletRequest): Promise<ApiResponse<{id: string}>> => {
+    // Backend returns {id, success, message} format for create
+    return apiRequest.post<{id: string}>('/wallets', wallet)
   },
 
-  // Update wallet details
+  // Update wallet details  
   updateWallet: async (walletID: string, updates: UpdateWalletRequest): Promise<ApiResponse<Wallet>> => {
-    return apiRequest.put<Wallet>(`/wallets/${walletID}`, updates)
+    const response = await apiRequest.put<{data: Wallet}>(`/wallets/${walletID}`, updates)
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data.data // Extract the nested data
+      }
+    }
+    return response as unknown as ApiResponse<Wallet>
   },
 
   // Delete a wallet
   deleteWallet: async (walletID: string): Promise<ApiResponse<void>> => {
+    // Backend returns {success, message} format for delete
     return apiRequest.delete<void>(`/wallets/${walletID}`)
   },
 

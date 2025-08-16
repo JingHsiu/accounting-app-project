@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS wallets (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    type VARCHAR(10) NOT NULL CHECK (type IN ('CASH', 'BANK')),
+    type VARCHAR(15) NOT NULL CHECK (type IN ('CASH', 'BANK', 'CREDIT', 'INVESTMENT')),
     currency CHAR(3) NOT NULL,
     balance_amount BIGINT NOT NULL DEFAULT 0,
     balance_currency CHAR(3) NOT NULL,

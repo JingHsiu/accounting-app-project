@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Light Purple Theme
+        // Light Pink-Purple Theme - 粉紫色系
         primary: {
           50: '#faf8ff',
           100: '#f3f0ff',

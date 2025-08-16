@@ -12,13 +12,15 @@ import (
 type WalletType string
 
 const (
-	WalletTypeCash WalletType = "CASH"
-	WalletTypeBank WalletType = "BANK"
+	WalletTypeCash       WalletType = "CASH"
+	WalletTypeBank       WalletType = "BANK"
+	WalletTypeCredit     WalletType = "CREDIT"
+	WalletTypeInvestment WalletType = "INVESTMENT"
 )
 
 func ParseWalletType(s string) (WalletType, error) {
 	switch WalletType(s) {
-	case WalletTypeCash, WalletTypeBank:
+	case WalletTypeCash, WalletTypeBank, WalletTypeCredit, WalletTypeInvestment:
 		return WalletType(s), nil
 	default:
 		return "", fmt.Errorf("invalid wallet type: %s", s)
@@ -44,6 +46,10 @@ type Wallet struct {
 }
 
 func NewWallet(userID, name string, walletType WalletType, currency string) (*Wallet, error) {
+	return NewWalletWithInitialBalance(userID, name, walletType, currency, 0)
+}
+
+func NewWalletWithInitialBalance(userID, name string, walletType WalletType, currency string, initialBalanceAmount int64) (*Wallet, error) {
 	if userID == "" {
 		return nil, errors.New("user ID cannot be empty")
 	}
@@ -53,8 +59,11 @@ func NewWallet(userID, name string, walletType WalletType, currency string) (*Wa
 	if currency == "" || len(currency) != 3 {
 		return nil, errors.New("currency must be 3 characters (ISO 4217)")
 	}
+	if initialBalanceAmount < 0 {
+		return nil, errors.New("initial balance cannot be negative")
+	}
 
-	initialBalance, err := NewMoney(0, currency)
+	initialBalance, err := NewMoney(initialBalanceAmount, currency)
 	if err != nil {
 		return nil, err
 	}
