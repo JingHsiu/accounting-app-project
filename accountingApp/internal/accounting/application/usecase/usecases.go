@@ -39,3 +39,23 @@ type CreateIncomeCategoryUseCase interface {
 type GetWalletBalanceUseCase interface {
 	Execute(input query.GetWalletBalanceInput) common.Output
 }
+
+// GetWalletsUseCase defines the interface for querying user's wallets
+type GetWalletsUseCase interface {
+	Execute(input query.GetWalletsInput) common.Output
+}
+
+// GetWalletUseCase defines the interface for querying a single wallet
+type GetWalletUseCase interface {
+	Execute(input query.GetWalletInput) common.Output
+}
+
+// UpdateWalletUseCase defines the interface for updating wallet information
+type UpdateWalletUseCase interface {
+	Execute(input command.UpdateWalletInput) common.Output
+}
+
+// DeleteWalletUseCase defines the interface for deleting wallets
+type DeleteWalletUseCase interface {
+	Execute(input command.DeleteWalletInput) common.Output
+}

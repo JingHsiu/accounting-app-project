@@ -327,25 +327,31 @@ func (c *WalletController) UpdateWallet(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Update wallet properties (this would need methods on the domain model)
-	// For now, we'll create a new wallet with updated properties
-	// Note: This is a simplified implementation - in practice, you'd want proper update methods
+	// Update wallet properties using domain model methods
 	updated := false
 	
 	if req.Name != "" && req.Name != wallet.Name {
-		// wallet.UpdateName(req.Name) - would need this method on domain model
+		if err := wallet.UpdateName(req.Name); err != nil {
+			c.sendError(w, "Invalid wallet name: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 		updated = true
 	}
 	
 	if req.Type != "" && req.Type != string(wallet.Type) {
-		// wallet.UpdateType(req.Type) - would need this method on domain model
+		walletType, err := model.ParseWalletType(req.Type)
+		if err != nil {
+			c.sendError(w, "Invalid wallet type: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := wallet.UpdateType(walletType); err != nil {
+			c.sendError(w, "Failed to update wallet type: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 		updated = true
 	}
 	
-	if req.Currency != "" && req.Currency != wallet.Currency() {
-		// wallet.UpdateCurrency(req.Currency) - would need this method on domain model
-		updated = true
-	}
+	// Note: Currency update is intentionally excluded as it would require complex balance conversion
 
 	if updated {
 		if err := c.walletRepository.Save(wallet); err != nil {

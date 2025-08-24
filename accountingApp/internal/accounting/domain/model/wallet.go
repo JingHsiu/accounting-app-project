@@ -89,6 +89,23 @@ func (w *Wallet) Currency() string {
 	return w.Balance.Currency
 }
 
+// UpdateName updates the wallet name
+func (w *Wallet) UpdateName(name string) error {
+	if strings.TrimSpace(name) == "" {
+		return errors.New("wallet name cannot be empty")
+	}
+	w.Name = strings.TrimSpace(name)
+	w.UpdatedAt = time.Now()
+	return nil
+}
+
+// UpdateType updates the wallet type
+func (w *Wallet) UpdateType(walletType WalletType) error {
+	w.Type = walletType
+	w.UpdatedAt = time.Now()
+	return nil
+}
+
 // Domain Model方法 - 透過聚合根獲取資訊
 func (w *Wallet) GetExpenseRecords() []ExpenseRecord {
 	return w.expenseRecords

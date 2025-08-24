@@ -8,17 +8,32 @@ import (
 )
 
 type Router struct {
+	// Specialized wallet controllers
+	createWalletController *controller.CreateWalletController
+	queryWalletController  *controller.QueryWalletController
+	updateWalletController *controller.UpdateWalletController
+	deleteWalletController *controller.DeleteWalletController
+	
+	// Legacy controller for transaction and balance operations
 	walletController   *controller.WalletController
 	categoryController *controller.CategoryController
 }
 
 func NewRouter(
-	walletController *controller.WalletController,
+	createWalletController *controller.CreateWalletController,
+	queryWalletController *controller.QueryWalletController,
+	updateWalletController *controller.UpdateWalletController,
+	deleteWalletController *controller.DeleteWalletController,
+	walletController *controller.WalletController, // For transactions and balance
 	categoryController *controller.CategoryController,
 ) *Router {
 	return &Router{
-		walletController:   walletController,
-		categoryController: categoryController,
+		createWalletController: createWalletController,
+		queryWalletController:  queryWalletController,
+		updateWalletController: updateWalletController,
+		deleteWalletController: deleteWalletController,
+		walletController:       walletController,
+		categoryController:     categoryController,
 	}
 }
 
@@ -51,9 +66,9 @@ func (r *Router) SetupRoutes() http.Handler {
 func (r *Router) handleWalletCollection(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case http.MethodGet:
-		r.walletController.GetWallets(w, req)
+		r.queryWalletController.GetWallets(w, req)
 	case http.MethodPost:
-		r.walletController.CreateWallet(w, req)
+		r.createWalletController.CreateWallet(w, req)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -67,14 +82,14 @@ func (r *Router) handleWalletResource(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	// Route to appropriate wallet resource method
+	// Route to appropriate specialized wallet controller
 	switch req.Method {
 	case http.MethodGet:
-		r.walletController.GetWallet(w, req)
+		r.queryWalletController.GetWallet(w, req)
 	case http.MethodPut:
-		r.walletController.UpdateWallet(w, req)
+		r.updateWalletController.UpdateWallet(w, req)
 	case http.MethodDelete:
-		r.walletController.DeleteWallet(w, req)
+		r.deleteWalletController.DeleteWallet(w, req)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
