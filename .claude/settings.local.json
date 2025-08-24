@@ -8,8 +8,12 @@
       "Bash(npm run build:*)",
       "Bash(git add:*)",
       "Bash(grep:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(go test:*)",
+      "Bash(timeout:*)",
+      "Bash(go mod:*)"
     ],
     "deny": []
-  }
+  },
+  "outputStyle": "default"
 }
