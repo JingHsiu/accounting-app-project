@@ -40,7 +40,7 @@ const Wallets: React.FC = () => {
     (wallet: CreateWalletRequest) => walletService.createWallet(wallet),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(['wallets'])
+        queryClient.invalidateQueries(['wallets', DEMO_USER_ID])
         setShowCreateModal(false)
         resetForm()
       }
@@ -51,7 +51,23 @@ const Wallets: React.FC = () => {
     (walletID: string) => walletService.deleteWallet(walletID),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(['wallets'])
+        queryClient.invalidateQueries(['wallets', DEMO_USER_ID])
+      }
+    }
+  )
+
+  const updateWalletMutation = useMutation(
+    ({ walletID, updates }: { walletID: string; updates: { name?: string; type?: WalletType } }) => 
+      walletService.updateWallet(walletID, updates),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['wallets', DEMO_USER_ID])
+        setShowCreateModal(false)
+        resetForm()
+      },
+      onError: (error) => {
+        console.error('錢包更新失敗:', error)
+        // 可以在這裡加入錯誤提示
       }
     }
   )
@@ -67,7 +83,13 @@ const Wallets: React.FC = () => {
     e.preventDefault()
     
     if (editingWallet) {
-      // TODO: Implement update wallet
+      updateWalletMutation.mutate({
+        walletID: editingWallet,
+        updates: {
+          name: formData.name,
+          type: formData.type
+        }
+      })
     } else {
       createWalletMutation.mutate({
         name: formData.name,
@@ -163,6 +185,7 @@ const Wallets: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="sm"
+                      disabled={updateWalletMutation.isLoading && editingWallet === wallet.id}
                       onClick={() => {
                         setEditingWallet(wallet.id)
                         setFormData({ 
@@ -220,7 +243,23 @@ const Wallets: React.FC = () => {
           setShowCreateModal(false)
           resetForm()
         }}
-        title={editingWallet ? '編輯錢包' : '新增錢包'}
+        title={
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${editingWallet ? 'bg-amber-100 text-amber-600' : 'bg-primary-100 text-primary-600'}`}>
+              {editingWallet ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">
+                {editingWallet ? '編輯錢包' : '新增錢包'}
+              </h2>
+              {editingWallet && (
+                <p className="text-sm text-neutral-500">
+                  修改錢包基本資訊
+                </p>
+              )}
+            </div>
+          </div>
+        }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -238,23 +277,50 @@ const Wallets: React.FC = () => {
             options={walletTypeOptions}
           />
 
-          <Select
-            label="貨幣"
-            value={formData.currency}
-            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-            options={currencyOptions}
-          />
+          {!editingWallet && (
+            <>
+              <Select
+                label="貨幣"
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                options={currencyOptions}
+              />
 
-          <Input
-            label="初始餘額"
-            type="number"
-            value={formData.initialBalance}
-            onChange={(e) => setFormData({ ...formData, initialBalance: Number(e.target.value) })}
-            placeholder="0"
-            step="0.01"
-            min="0"
-            required
-          />
+              <Input
+                label="初始餘額"
+                type="number"
+                value={formData.initialBalance}
+                onChange={(e) => setFormData({ ...formData, initialBalance: Number(e.target.value) })}
+                placeholder="0"
+                step="0.01"
+                min="0"
+                required
+              />
+            </>
+          )}
+          
+          {editingWallet && (
+            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 space-y-2">
+              <h4 className="text-sm font-medium text-neutral-700">不可修改的資訊</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-neutral-500">貨幣：</span>
+                  <span className="font-medium">{formData.currency}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-500">當前餘額：</span>
+                  <span className="font-medium">{
+                    walletsData?.data?.find(w => w.id === editingWallet)?.balance 
+                      ? formatMoney(walletsData.data.find(w => w.id === editingWallet)!.balance)
+                      : '載入中...'
+                  }</span>
+                </div>
+              </div>
+              <p className="text-xs text-neutral-500">
+                貨幣和餘額無法直接修改，餘額會隨著交易記錄變動
+              </p>
+            </div>
+          )}
           
           <div className="flex gap-2 pt-4">
             <Button
@@ -271,7 +337,7 @@ const Wallets: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              loading={createWalletMutation.isLoading}
+              loading={editingWallet ? updateWalletMutation.isLoading : createWalletMutation.isLoading}
               className="flex-1"
             >
               {editingWallet ? '更新' : '建立'}

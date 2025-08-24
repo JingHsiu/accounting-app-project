@@ -48,7 +48,7 @@ export const apiRequest = {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message,
+        error: error.response?.data?.error || error.response?.data?.message || error.message,
       }
     }
   },
@@ -63,7 +63,7 @@ export const apiRequest = {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message,
+        error: error.response?.data?.error || error.response?.data?.message || error.message,
       }
     }
   },
@@ -78,7 +78,7 @@ export const apiRequest = {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message,
+        error: error.response?.data?.error || error.response?.data?.message || error.message,
       }
     }
   },
@@ -93,7 +93,7 @@ export const apiRequest = {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message,
+        error: error.response?.data?.error || error.response?.data?.message || error.message,
       }
     }
   },

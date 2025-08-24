@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 interface ModalProps {
   isOpen: boolean
   onClose: () => void
-  title: string
+  title: string | React.ReactNode
   children: React.ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }
@@ -49,7 +49,13 @@ export const Modal: React.FC<ModalProps> = ({
         <div className={`relative glass-card w-full ${sizeClasses[size]} animate-slide-up`}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-primary-200">
-            <h2 className="text-xl font-semibold text-neutral-800">{title}</h2>
+            <div className={typeof title === 'string' ? 'text-xl font-semibold text-neutral-800' : ''}>
+              {typeof title === 'string' ? (
+                <h2 className="text-xl font-semibold text-neutral-800">{title}</h2>
+              ) : (
+                title
+              )}
+            </div>
             <button
               onClick={onClose}
               className="text-neutral-500 hover:text-neutral-700 transition-colors"

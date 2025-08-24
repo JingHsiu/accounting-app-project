@@ -72,8 +72,15 @@ export const walletService = {
 
   // Delete a wallet
   deleteWallet: async (walletID: string): Promise<ApiResponse<void>> => {
-    // Backend returns {success, message} format for delete
-    return apiRequest.delete<void>(`/wallets/${walletID}`)
+    // Backend returns {success: true, data: {message: string}} format for delete
+    const response = await apiRequest.delete<{data: {message: string}}>(`/wallets/${walletID}`)
+    if (response.success && response.data) {
+      return {
+        success: true,
+        message: response.data.data.message // Extract message from nested structure
+      }
+    }
+    return response as unknown as ApiResponse<void>
   },
 
   // Get wallet balance
