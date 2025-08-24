@@ -120,7 +120,13 @@ func setupTestServer() (*httptest.Server, *FullMockWalletRepository) {
 	mockCreateWalletUseCase := NewFullMockCreateWalletUseCase()
 	mockGetWalletBalanceUseCase := &MockGetWalletBalanceUseCase{}
 	
-	// Create controller
+	// Create specialized controllers
+	createWalletController := controller.NewCreateWalletController(mockCreateWalletUseCase)
+	queryWalletController := controller.NewQueryWalletController(mockRepo)
+	updateWalletController := controller.NewUpdateWalletController(mockRepo)
+	deleteWalletController := controller.NewDeleteWalletController(mockRepo)
+	
+	// Create legacy wallet controller for transaction operations
 	walletController := controller.NewWalletController(
 		mockCreateWalletUseCase,
 		&MockAddExpenseUseCase{},
@@ -137,8 +143,15 @@ func setupTestServer() (*httptest.Server, *FullMockWalletRepository) {
 		mockCreateIncomeCategoryUseCase,
 	)
 	
-	// Create router
-	router := web.NewRouter(walletController, categoryController)
+	// Create router with specialized controllers
+	router := web.NewRouter(
+		createWalletController,
+		queryWalletController,
+		updateWalletController,
+		deleteWalletController,
+		walletController, // For transaction and balance operations
+		categoryController,
+	)
 	handler := router.SetupRoutes()
 	
 	// Create test server
