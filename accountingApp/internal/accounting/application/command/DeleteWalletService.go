@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/repository"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 )
-
-type DeleteWalletInput struct {
-	WalletID string
-}
 
 type DeleteWalletService struct {
 	repo repository.WalletRepository
@@ -18,7 +15,7 @@ func NewDeleteWalletService(repo repository.WalletRepository) *DeleteWalletServi
 	return &DeleteWalletService{repo: repo}
 }
 
-func (s *DeleteWalletService) Execute(input DeleteWalletInput) common.Output {
+func (s *DeleteWalletService) Execute(input usecase.DeleteWalletInput) common.Output {
 	// Check if wallet exists
 	wallet, err := s.repo.FindByID(input.WalletID)
 	if err != nil {

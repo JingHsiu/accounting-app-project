@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/JingHsiu/accountingApp/internal/accounting/application/command"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 )
@@ -36,30 +35,42 @@ func (c *UpdateWalletController) UpdateWallet(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var req struct {
-		Name     string `json:"name,omitempty"`
-		Type     string `json:"type,omitempty"`
-		Currency string `json:"currency,omitempty"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var reqMap map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&reqMap); err != nil {
 		c.sendError(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Prepare input for use case
-	var name, walletType, currency *string
-	if req.Name != "" {
-		name = &req.Name
-	}
-	if req.Type != "" {
-		walletType = &req.Type
-	}
-	if req.Currency != "" {
-		currency = &req.Currency
+	// Validation: Check if empty values are provided for fields that were explicitly set
+	if nameValue, nameExists := reqMap["name"]; nameExists {
+		if nameStr, ok := nameValue.(string); ok && strings.TrimSpace(nameStr) == "" {
+			c.sendError(w, "Name cannot be empty", http.StatusBadRequest)
+			return
+		}
 	}
 
-	result := c.updateWalletUseCase.Execute(command.UpdateWalletInput{
+	// Prepare input for use case
+	var name, walletType, currency *string
+	
+	if nameValue, exists := reqMap["name"]; exists {
+		if nameStr, ok := nameValue.(string); ok && nameStr != "" {
+			name = &nameStr
+		}
+	}
+	
+	if typeValue, exists := reqMap["type"]; exists {
+		if typeStr, ok := typeValue.(string); ok && typeStr != "" {
+			walletType = &typeStr
+		}
+	}
+	
+	if currencyValue, exists := reqMap["currency"]; exists {
+		if currencyStr, ok := currencyValue.(string); ok && currencyStr != "" {
+			currency = &currencyStr
+		}
+	}
+
+	result := c.updateWalletUseCase.Execute(usecase.UpdateWalletInput{
 		WalletID: walletID,
 		Name:     name,
 		Type:     walletType,

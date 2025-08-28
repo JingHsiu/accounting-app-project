@@ -4,13 +4,9 @@ import (
 	"fmt"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/repository"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 )
-
-type CreateIncomeCategoryInput struct {
-	UserID string
-	Name   string
-}
 
 type CreateIncomeCategoryService struct {
 	repo repository.IncomeCategoryRepository
@@ -20,7 +16,7 @@ func NewCreateIncomeCategoryService(repo repository.IncomeCategoryRepository) *C
 	return &CreateIncomeCategoryService{repo: repo}
 }
 
-func (s *CreateIncomeCategoryService) Execute(input CreateIncomeCategoryInput) common.Output {
+func (s *CreateIncomeCategoryService) Execute(input usecase.CreateIncomeCategoryInput) common.Output {
 	categoryName, err := model.NewCategoryName(input.Name)
 	if err != nil {
 		return common.UseCaseOutput{

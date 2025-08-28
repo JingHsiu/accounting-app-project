@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/JingHsiu/accountingApp/internal/accounting/adapter"
+	"github.com/JingHsiu/accountingApp/internal/accounting/test"
 	"github.com/JingHsiu/accountingApp/internal/accounting/adapter/controller"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/command"
 )
 
 func TestCreateWalletController_CreateWallet_Success(t *testing.T) {
 	// Arrange - Use real implementations
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 	ctrl := controller.NewCreateWalletController(service)
 
@@ -54,7 +54,7 @@ func TestCreateWalletController_CreateWallet_Success(t *testing.T) {
 
 func TestCreateWalletController_CreateWallet_WithInitialBalance(t *testing.T) {
 	// Arrange
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 	ctrl := controller.NewCreateWalletController(service)
 
@@ -95,7 +95,7 @@ func TestCreateWalletController_CreateWallet_WithInitialBalance(t *testing.T) {
 
 func TestCreateWalletController_CreateWallet_MissingUserID(t *testing.T) {
 	// Arrange
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 	ctrl := controller.NewCreateWalletController(service)
 
@@ -128,7 +128,7 @@ func TestCreateWalletController_CreateWallet_MissingUserID(t *testing.T) {
 
 func TestCreateWalletController_CreateWallet_InvalidWalletType(t *testing.T) {
 	// Arrange
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 	ctrl := controller.NewCreateWalletController(service)
 
@@ -168,7 +168,7 @@ func TestCreateWalletController_CreateWallet_InvalidWalletType(t *testing.T) {
 
 func TestCreateWalletController_CreateWallet_InvalidJSON(t *testing.T) {
 	// Arrange
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 	ctrl := controller.NewCreateWalletController(service)
 
@@ -187,7 +187,7 @@ func TestCreateWalletController_CreateWallet_InvalidJSON(t *testing.T) {
 
 func TestCreateWalletController_CreateWallet_MethodNotAllowed(t *testing.T) {
 	// Arrange
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 	ctrl := controller.NewCreateWalletController(service)
 

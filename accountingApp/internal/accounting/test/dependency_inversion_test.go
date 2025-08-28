@@ -10,10 +10,10 @@ import (
 
 // MockCreateWalletUseCase is a mock implementation of CreateWalletUseCase
 type MockCreateWalletUseCase struct {
-	executeFunc func(input command.CreateWalletInput) common.Output
+	executeFunc func(input usecase.CreateWalletInput) common.Output
 }
 
-func (m *MockCreateWalletUseCase) Execute(input command.CreateWalletInput) common.Output {
+func (m *MockCreateWalletUseCase) Execute(input usecase.CreateWalletInput) common.Output {
 	if m.executeFunc != nil {
 		return m.executeFunc(input)
 	}
@@ -33,7 +33,7 @@ func TestDependencyInversion(t *testing.T) {
 	var useCase usecase.CreateWalletUseCase = mockUseCase
 
 	// Test that the interface method works
-	input := command.CreateWalletInput{
+	input := usecase.CreateWalletInput{
 		UserID:   "test-user",
 		Name:     "Test Wallet",
 		Type:     "CASH",

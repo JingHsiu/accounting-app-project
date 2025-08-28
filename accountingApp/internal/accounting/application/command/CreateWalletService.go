@@ -4,16 +4,9 @@ import (
 	"fmt"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/repository"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 )
-
-type CreateWalletInput struct {
-	UserID         string
-	Name           string
-	Type           string
-	Currency       string
-	InitialBalance *int64 // Optional initial balance in cents/smallest currency unit
-}
 
 type CreateWalletService struct {
 	repo repository.WalletRepository
@@ -23,7 +16,7 @@ func NewCreateWalletService(repo repository.WalletRepository) *CreateWalletServi
 	return &CreateWalletService{repo: repo}
 }
 
-func (s *CreateWalletService) Execute(input CreateWalletInput) common.Output {
+func (s *CreateWalletService) Execute(input usecase.CreateWalletInput) common.Output {
 	parsedType, err := model.ParseWalletType(input.Type)
 	if err != nil {
 		return common.UseCaseOutput{

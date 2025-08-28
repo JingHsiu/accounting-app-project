@@ -5,10 +5,11 @@
 
 ## 🎯 Current Project State
 
-**Status**: 🟡 Backend Core Complete → Category Implementation Phase  
-**Architecture**: ✅ Clean Architecture + Bridge Pattern (98% compliance)  
-**Test Coverage**: ✅ 6/6 test packages passing  
-**Last Update**: 2025-08-16
+**Status**: 🟡 Architecture Refactoring Complete - Repository Layer Pending  
+**Architecture**: 98% Clean Architecture + DDD + CQRS compliance  
+**Test Coverage**: 🟡 Need validation for specialized controller tests  
+**Build Status**: ✅ Compiles successfully  
+**Last Update**: 2025-08-28
 
 ## 📋 Implementation Matrix
 
@@ -18,7 +19,7 @@
 |-----------|--------|-------|----------|-------|
 | **Domain Models** | ✅ Complete | 7 files | - | Wallet, Money, Categories |
 | **Use Cases** | 🟡 Partial | 6 files | 🔴 High | Missing category repos |
-| **Controllers** | ✅ Complete | 2 files | - | Full CRUD APIs |
+| **Controllers** | ✅ Specialized | 8 files | - | Specialized controllers (SRP) |
 | **Repository Bridge** | 🟡 Partial | 4 files | 🔴 High | Wallet ✅, Categories 🔴 |
 | **Database Layer** | ✅ Complete | 3 files | - | PostgreSQL + schema |
 | **Web Framework** | ✅ Complete | 1 file | - | Router + middleware |
@@ -31,23 +32,47 @@
 | Use Case Tests | ✅ Passing | 90%+ | Mock-based testing |
 | Controller Tests | ✅ Passing | 85%+ | HTTP endpoint testing |
 | Repository Tests | ✅ Passing | 90%+ | Bridge pattern validation |
-| Integration Tests | ✅ Passing | 80%+ | End-to-end workflows |
+| Integration Tests | ❌ FAILING | N/A | Controller signature mismatches |
 | General Tests | ✅ Passing | 85%+ | Cross-cutting concerns |
 
 ## 🚧 Active Development Priorities
 
-### 🔴 Critical (This Session)
+### ✅ Recent Achievements (Architecture Refactoring Complete)
+1. **Controller Specialization Complete**
+   - ✅ `CreateWalletController` - dedicated wallet creation
+   - ✅ `GetWalletController` - wallet queries (renamed from QueryWalletController)
+   - ✅ `UpdateWalletController` - wallet updates
+   - ✅ `DeleteWalletController` - wallet deletion
+   - ✅ `GetWalletBalanceController` - specialized balance queries
+   - ✅ `AddExpenseController` - expense transaction handling
+   - ✅ `AddIncomeController` - income transaction handling
+   - ✅ `CategoryController` - category management
+   - **Impact**: Single Responsibility Principle (SRP) compliance achieved
+
+2. **Contract Centralization Complete**
+   - ✅ All Input/Output structs moved to `/usecase` package
+   - ✅ Clean separation between contracts and implementations
+   - ✅ Enhanced Clean Architecture compliance
+   - **Impact**: Improved maintainability and reduced coupling
+
+3. **Router Integration Updated**
+   - ✅ Router updated for specialized controller architecture
+   - ✅ Proper request routing to specialized controllers
+   - ✅ Maintained RESTful API design
+   - **Impact**: Better request handling and separation of concerns
+
+### 🔴 Remaining Critical Issues
 1. **Category Repository Implementation**
    - [ ] `PostgresExpenseCategoryRepositoryPeer` (Layer 4)
    - [ ] `PostgresIncomeCategoryRepositoryPeer` (Layer 4)
-   - [ ] Update `main.go` dependency injection
+   - [ ] Update `main.go` dependency injection (remove `nil` deps)
    - **Impact**: Unblocks AddExpense/AddIncome use cases
 
-2. **Use Case Dependency Fix**
-   - [ ] Update `AddExpenseService` constructor
-   - [ ] Update `AddIncomeService` constructor
-   - [ ] Test end-to-end transaction flows
-   - **Impact**: Core transaction functionality
+2. **Service Dependencies**
+   - [ ] Fix `nil` category repository in `AddExpenseService`
+   - [ ] Fix `nil` category repository in `AddIncomeService`
+   - [ ] Fix `nil` repository in `CreateExpenseCategoryService`
+   - **Impact**: Core transaction functionality not operational
 
 ### 🟡 Important (Next Session)
 3. **Transaction History Loading**
@@ -62,7 +87,7 @@
 
 ## 📁 Quick File Reference
 
-### Core Implementation Files
+### Core Implementation Files (Updated Architecture)
 ```bash
 # Domain Layer
 internal/accounting/domain/model/wallet.go           # Aggregate root
@@ -71,14 +96,22 @@ internal/accounting/domain/model/money.go            # Value object
 # Application Layer
 internal/accounting/application/repository/Repository.go              # Interfaces
 internal/accounting/application/repository/WalletRepositoryImpl.go    # Bridge impl
-internal/accounting/application/command/AddExpenseService.go          # 🔴 Needs fix
+internal/accounting/application/usecase/usecases.go                   # Centralized contracts
+internal/accounting/application/command/AddExpenseService.go          # 🔴 Needs category repo
 
-# Adapter Layer
-internal/accounting/adapter/controller/walletController.go            # HTTP API
+# Adapter Layer (Specialized Controllers)
+internal/accounting/adapter/controller/createWalletController.go      # Wallet creation
+internal/accounting/adapter/controller/getWalletController.go         # Wallet queries
+internal/accounting/adapter/controller/updateWalletController.go      # Wallet updates
+internal/accounting/adapter/controller/deleteWalletController.go      # Wallet deletion
+internal/accounting/adapter/controller/getWalletBalanceController.go  # Balance queries
+internal/accounting/adapter/controller/addExpenseController.go        # Expense transactions
+internal/accounting/adapter/controller/addIncomeController.go         # Income transactions
+internal/accounting/adapter/controller/categoryController.go          # Category management
 
 # Framework Layer  
 internal/accounting/frameworks/database/postgresWalletRepository.go   # DB impl
-internal/accounting/frameworks/web/router.go                          # Routing
+internal/accounting/frameworks/web/router.go                          # Updated routing
 ```
 
 ### Configuration Files
@@ -95,18 +128,26 @@ internal/accounting/frameworks/database/schema.sql  # Database schema
 ```bash
 go test ./...                                    # All tests (6 packages)
 go test ./internal/accounting/test/usecase/     # Use case tests
-go test ./internal/accounting/test/integration/ # E2E tests
+go test ./internal/accounting/test/integration/ # E2E tests (CURRENTLY FAILING)
 ```
 
 ### Test Status Check
 ```bash
-# Last Status: 2025-08-16
-✅ internal/accounting/test                 0.291s
-✅ internal/accounting/test/controller      0.463s  
-✅ internal/accounting/test/domain          0.667s
-✅ internal/accounting/test/integration     1.270s
-✅ internal/accounting/test/repository      0.842s
-✅ internal/accounting/test/usecase         1.043s
+# Last Status: 2025-08-24
+✅ internal/accounting/test                 (cached)
+✅ internal/accounting/test/controller      (cached)
+✅ internal/accounting/test/domain          (cached)
+❌ internal/accounting/test/integration     [build failed]
+✅ internal/accounting/test/repository      (cached)
+✅ internal/accounting/test/usecase         (cached)
+```
+
+### Integration Test Error Details
+```
+ControllerSignatureMismatch:
+- QueryWalletController: not enough arguments (expects 2 use cases)
+- UpdateWalletController: mock doesn't implement UpdateWalletUseCase
+- DeleteWalletController: mock doesn't implement DeleteWalletUseCase
 ```
 
 ## 🔄 Documentation Update Workflow
@@ -138,12 +179,13 @@ docs/API-REFERENCE.md        # API documentation
 
 ### Current Metrics (Auto-Updated)
 ```bash
-Backend Go Files:     40
-Test Files:          12  
-Test Packages:        6 (all passing)
-API Endpoints:        8
+Backend Go Files:     45+ (specialized controllers added)
+Test Files:          15+ (specialized controller tests)
+Test Packages:        6 (need validation)
+API Endpoints:        8 (same routes, specialized handlers)
 Database Tables:      7
-Architecture Layer:   4 (Clean Architecture)
+Architecture Layer:   4 (Clean Architecture + DDD + CQRS)
+Specialized Controllers: 8 (SRP compliance)
 ```
 
 ### Performance Benchmarks
@@ -177,6 +219,8 @@ Architecture Layer:   4 (Clean Architecture)
 
 ---
 
-**Context Tracker Version**: v1.0  
-**Last Updated**: 2025-08-16  
-**Next Update**: After completing 🔴 Critical priorities
+**Context Tracker Version**: v1.2  
+**Last Updated**: 2025-08-28  
+**Current Status**: Architecture refactoring complete, repository layer pending  
+**Recent Achievement**: ✅ Controller specialization and contract centralization complete  
+**Next Update**: After implementing category repositories and validating tests

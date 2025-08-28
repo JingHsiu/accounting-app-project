@@ -4,6 +4,7 @@ import (
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/command"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/mapper"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -65,7 +66,7 @@ func TestCreateExpenseCategory_Success(t *testing.T) {
 	repo.On("Save", mock.AnythingOfType("*model.ExpenseCategory")).Return(nil)
 
 	service := command.NewCreateExpenseCategoryService(repo)
-	input := command.CreateExpenseCategoryInput{
+	input := usecase.CreateExpenseCategoryInput{
 		UserID: "user-123",
 		Name:   "Food & Dining",
 	}
@@ -81,7 +82,7 @@ func TestCreateExpenseCategory_InvalidName(t *testing.T) {
 	repo := new(MockExpenseCategoryRepository)
 
 	service := command.NewCreateExpenseCategoryService(repo)
-	input := command.CreateExpenseCategoryInput{
+	input := usecase.CreateExpenseCategoryInput{
 		UserID: "user-123",
 		Name:   "",
 	}

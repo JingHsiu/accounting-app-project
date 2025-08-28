@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
-	"github.com/JingHsiu/accountingApp/internal/accounting/application/query"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 )
@@ -40,7 +39,7 @@ func (c *QueryWalletController) GetWallets(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	result := c.getWalletsUseCase.Execute(query.GetWalletsInput{
+	result := c.getWalletsUseCase.Execute(usecase.GetWalletsInput{
 		UserID: userID,
 	})
 
@@ -50,7 +49,7 @@ func (c *QueryWalletController) GetWallets(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Convert domain models to API response format
-	output, ok := result.(query.GetWalletsOutput)
+	output, ok := result.(usecase.GetWalletsOutput)
 	if !ok {
 		c.sendError(w, "Internal error: invalid output type", http.StatusInternalServerError)
 		return
@@ -82,9 +81,9 @@ func (c *QueryWalletController) GetWallet(w http.ResponseWriter, r *http.Request
 
 	// Check if we need to load transactions (query parameter)
 	includeTransactions := r.URL.Query().Get("includeTransactions") == "true"
-	
-	result := c.getWalletUseCase.Execute(query.GetWalletInput{
-		WalletID:           walletID,
+
+	result := c.getWalletUseCase.Execute(usecase.GetWalletInput{
+		WalletID:            walletID,
 		IncludeTransactions: includeTransactions,
 	})
 
@@ -98,7 +97,7 @@ func (c *QueryWalletController) GetWallet(w http.ResponseWriter, r *http.Request
 	}
 
 	// Convert domain model to API response format
-	output, ok := result.(query.GetWalletOutput)
+	output, ok := result.(usecase.GetWalletOutput)
 	if !ok {
 		c.sendError(w, "Internal error: invalid output type", http.StatusInternalServerError)
 		return

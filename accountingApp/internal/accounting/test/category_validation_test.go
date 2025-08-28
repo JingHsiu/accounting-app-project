@@ -7,6 +7,7 @@ import (
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/command"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/mapper"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 )
 
@@ -259,7 +260,7 @@ func TestAddExpenseWithValidation(t *testing.T) {
 	addExpenseService := command.NewAddExpenseService(walletRepo, categoryRepo)
 
 	// 4. 測試有效的子分類ID
-	validInput := command.AddExpenseInput{
+	validInput := usecase.AddExpenseInput{
 		WalletID:      wallet.ID,
 		SubcategoryID: subcategory.ID,
 		Amount:        2500, // $25.00
@@ -279,7 +280,7 @@ func TestAddExpenseWithValidation(t *testing.T) {
 	}
 
 	// 5. 測試無效的子分類ID
-	invalidInput := command.AddExpenseInput{
+	invalidInput := usecase.AddExpenseInput{
 		WalletID:      wallet.ID,
 		SubcategoryID: "invalid-subcategory-id",
 		Amount:        1000,
@@ -363,7 +364,7 @@ func TestAddExpenseValidationIntegration(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			input := command.AddExpenseInput{
+			input := usecase.AddExpenseInput{
 				WalletID:      wallet.ID,
 				SubcategoryID: tc.subcategoryID,
 				Amount:        tc.amount,

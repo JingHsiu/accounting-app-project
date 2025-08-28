@@ -9,13 +9,17 @@ import (
 
 type Router struct {
 	// Specialized wallet controllers
-	createWalletController *controller.CreateWalletController
-	queryWalletController  *controller.QueryWalletController
-	updateWalletController *controller.UpdateWalletController
-	deleteWalletController *controller.DeleteWalletController
-	
-	// Legacy controller for transaction and balance operations
-	walletController   *controller.WalletController
+	createWalletController     *controller.CreateWalletController
+	queryWalletController      *controller.QueryWalletController
+	updateWalletController     *controller.UpdateWalletController
+	deleteWalletController     *controller.DeleteWalletController
+	getWalletBalanceController *controller.GetWalletBalanceController
+
+	// Specialized transaction controllers
+	addExpenseController *controller.AddExpenseController
+	addIncomeController  *controller.AddIncomeController
+
+	// Category controllers
 	categoryController *controller.CategoryController
 }
 
@@ -24,22 +28,26 @@ func NewRouter(
 	queryWalletController *controller.QueryWalletController,
 	updateWalletController *controller.UpdateWalletController,
 	deleteWalletController *controller.DeleteWalletController,
-	walletController *controller.WalletController, // For transactions and balance
+	getWalletBalanceController *controller.GetWalletBalanceController,
+	addExpenseController *controller.AddExpenseController,
+	addIncomeController *controller.AddIncomeController,
 	categoryController *controller.CategoryController,
 ) *Router {
 	return &Router{
-		createWalletController: createWalletController,
-		queryWalletController:  queryWalletController,
-		updateWalletController: updateWalletController,
-		deleteWalletController: deleteWalletController,
-		walletController:       walletController,
-		categoryController:     categoryController,
+		createWalletController:     createWalletController,
+		queryWalletController:      queryWalletController,
+		updateWalletController:     updateWalletController,
+		deleteWalletController:     deleteWalletController,
+		getWalletBalanceController: getWalletBalanceController,
+		addExpenseController:       addExpenseController,
+		addIncomeController:        addIncomeController,
+		categoryController:         categoryController,
 	}
 }
 
 func (r *Router) SetupRoutes() http.Handler {
 	mux := http.NewServeMux()
-	
+
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -47,17 +55,17 @@ func (r *Router) SetupRoutes() http.Handler {
 	})
 
 	// Wallet endpoints - REST API design
-	mux.HandleFunc("/api/v1/wallets", r.handleWalletCollection)          // GET (with userID param), POST
-	mux.HandleFunc("/api/v1/wallets/", r.handleWalletResource)           // GET, PUT, DELETE by ID
-	mux.HandleFunc("/api/v1/wallets/balance/", r.walletController.GetWalletBalance) // Keep existing balance endpoint
+	mux.HandleFunc("/api/v1/wallets", r.handleWalletCollection)                     // GET (with userID param), POST
+	mux.HandleFunc("/api/v1/wallets/", r.handleWalletResource)                      // GET, PUT, DELETE by ID
+	mux.HandleFunc("/api/v1/wallets/balance/", r.getWalletBalanceController.GetWalletBalance) // Specialized balance endpoint
 
 	// Category endpoints
 	mux.HandleFunc("/api/v1/categories/expense", r.categoryController.CreateExpenseCategory)
 	mux.HandleFunc("/api/v1/categories/income", r.categoryController.CreateIncomeCategory)
 
 	// Transaction endpoints
-	mux.HandleFunc("/api/v1/expenses", r.walletController.AddExpense)
-	mux.HandleFunc("/api/v1/incomes", r.walletController.AddIncome)
+	mux.HandleFunc("/api/v1/expenses", r.addExpenseController.AddExpense)
+	mux.HandleFunc("/api/v1/incomes", r.addIncomeController.AddIncome)
 
 	return mux
 }
@@ -78,7 +86,7 @@ func (r *Router) handleWalletCollection(w http.ResponseWriter, req *http.Request
 func (r *Router) handleWalletResource(w http.ResponseWriter, req *http.Request) {
 	// Check if this is a balance request (ends with /balance)
 	if strings.HasSuffix(req.URL.Path, "/balance") {
-		r.walletController.GetWalletBalance(w, req)
+		r.getWalletBalanceController.GetWalletBalance(w, req)
 		return
 	}
 

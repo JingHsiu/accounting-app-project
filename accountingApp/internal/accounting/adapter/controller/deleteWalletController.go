@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/JingHsiu/accountingApp/internal/accounting/application/command"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 )
@@ -36,7 +35,7 @@ func (c *DeleteWalletController) DeleteWallet(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	result := c.deleteWalletUseCase.Execute(command.DeleteWalletInput{
+	result := c.deleteWalletUseCase.Execute(usecase.DeleteWalletInput{
 		WalletID: walletID,
 	})
 

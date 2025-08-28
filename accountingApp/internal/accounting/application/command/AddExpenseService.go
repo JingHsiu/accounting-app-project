@@ -4,18 +4,9 @@ import (
 	"fmt"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/repository"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
-	"time"
 )
-
-type AddExpenseInput struct {
-	WalletID      string
-	SubcategoryID string
-	Amount        int64
-	Currency      string
-	Description   string
-	Date          time.Time
-}
 
 type AddExpenseService struct {
 	walletRepo   repository.WalletRepository
@@ -29,7 +20,7 @@ func NewAddExpenseService(walletRepo repository.WalletRepository, categoryRepo r
 	}
 }
 
-func (s *AddExpenseService) Execute(input AddExpenseInput) common.Output {
+func (s *AddExpenseService) Execute(input usecase.AddExpenseInput) common.Output {
 	// 1. 透過Repository取得錢包 (可能需要完整聚合取決於業務需求)
 	wallet, err := s.walletRepo.FindByIDWithTransactions(input.WalletID)
 	if err != nil {

@@ -4,18 +4,9 @@ import (
 	"fmt"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/repository"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
-	"time"
 )
-
-type AddIncomeInput struct {
-	WalletID      string
-	SubcategoryID string
-	Amount        int64
-	Currency      string
-	Description   string
-	Date          time.Time
-}
 
 type AddIncomeService struct {
 	walletRepo   repository.WalletRepository
@@ -29,7 +20,7 @@ func NewAddIncomeService(walletRepo repository.WalletRepository, categoryRepo re
 	}
 }
 
-func (s *AddIncomeService) Execute(input AddIncomeInput) common.Output {
+func (s *AddIncomeService) Execute(input usecase.AddIncomeInput) common.Output {
 	// 1. 驗證錢包存在
 	wallet, err := s.walletRepo.FindByID(input.WalletID)
 	if err != nil {

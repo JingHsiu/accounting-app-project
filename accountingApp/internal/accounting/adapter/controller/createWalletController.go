@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"net/http"
-
-	"github.com/JingHsiu/accountingApp/internal/accounting/application/command"
 )
 
 // CreateWalletController represents the controller responsible for wallet creation
@@ -58,7 +56,7 @@ func (c *CreateWalletController) CreateWallet(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	input := command.CreateWalletInput{
+	input := usecase.CreateWalletInput{
 		UserID:         req.UserID,
 		Name:           req.Name,
 		Type:           req.Type,

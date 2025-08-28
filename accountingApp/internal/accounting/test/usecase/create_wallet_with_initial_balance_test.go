@@ -3,26 +3,27 @@ package usecase
 import (
 	"testing"
 
-	"github.com/JingHsiu/accountingApp/internal/accounting/adapter"
+	"github.com/JingHsiu/accountingApp/internal/accounting/test"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/command"
 	"github.com/JingHsiu/accountingApp/internal/accounting/application/common"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/usecase"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateWalletWithInitialBalance(t *testing.T) {
 	// Arrange
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 
 	testCases := []struct {
 		name           string
-		input          command.CreateWalletInput
+		input          usecase.CreateWalletInput
 		expectedAmount int64
 		shouldSucceed  bool
 	}{
 		{
 			name: "Create wallet with zero initial balance",
-			input: command.CreateWalletInput{
+			input: usecase.CreateWalletInput{
 				UserID:         "user123",
 				Name:           "Test Wallet",
 				Type:           "CASH",
@@ -34,7 +35,7 @@ func TestCreateWalletWithInitialBalance(t *testing.T) {
 		},
 		{
 			name: "Create wallet with positive initial balance",
-			input: command.CreateWalletInput{
+			input: usecase.CreateWalletInput{
 				UserID:         "user123",
 				Name:           "Test Wallet",
 				Type:           "BANK",
@@ -46,7 +47,7 @@ func TestCreateWalletWithInitialBalance(t *testing.T) {
 		},
 		{
 			name: "Create wallet with negative initial balance should fail",
-			input: command.CreateWalletInput{
+			input: usecase.CreateWalletInput{
 				UserID:         "user123",
 				Name:           "Test Wallet",
 				Type:           "CASH",
@@ -87,7 +88,7 @@ func TestCreateWalletWithInitialBalance(t *testing.T) {
 
 func TestCreateWalletWithDifferentTypes(t *testing.T) {
 	// Test all wallet types
-	repo, _ := adapter.NewFakeWalletRepo()
+	repo, _ := test.NewFakeWalletRepo()
 	service := command.NewCreateWalletService(repo)
 
 	walletTypes := []string{"CASH", "BANK", "CREDIT", "INVESTMENT"}
@@ -95,7 +96,7 @@ func TestCreateWalletWithDifferentTypes(t *testing.T) {
 
 	for _, walletType := range walletTypes {
 		t.Run("Create_"+walletType+"_wallet", func(t *testing.T) {
-			input := command.CreateWalletInput{
+			input := usecase.CreateWalletInput{
 				UserID:         "user123",
 				Name:           walletType + " Wallet",
 				Type:           walletType,
