@@ -18,20 +18,22 @@ type Repository[T any] interface {
 	Delete(id string) error
 }
 
-// WalletRepositoryPeer 第二層儲存實現的橋接介面 (Bridge Pattern)
-// 只處理資料結構，不接觸Domain Model，符合Clean Architecture依賴規則
+// WalletRepositoryPeer Layer 3 (Adapter) 橋接介面 (Bridge Pattern)
+// 使用AggregateStore抽象，不直接依賴具體的數據庫實現
 type WalletRepositoryPeer interface {
-	// SaveData 儲存錢包資料結構
-	SaveData(data mapper.WalletData) error
+	// Save 儲存錢包聚合狀態
+	Save(data mapper.WalletData) error
 
-	// FindDataByID 根據ID查找錢包資料結構
-	FindDataByID(id string) (*mapper.WalletData, error)
+	// FindByID 根據ID查找錢包聚合狀態
+	FindByID(id string) (*mapper.WalletData, error)
 
-	// FindDataByUserID 根據UserID查找用戶的所有錢包資料結構
-	FindDataByUserID(userID string) ([]mapper.WalletData, error)
+	// FindByUserID 根據UserID查找用戶的所有錢包聚合狀態
+	FindByUserID(userID string) ([]mapper.WalletData, error)
 
-	// DeleteData 根據ID刪除錢包資料
-	DeleteData(id string) error
+	// Delete 根據ID刪除錢包聚合狀態
+	Delete(id string) error
+
+	// Note: Use FindByID() for existence checks - returns nil if not found
 }
 
 // WalletRepository 錢包專用儲存庫介面 (第二層)
@@ -41,10 +43,10 @@ type WalletRepository interface {
 	Save(wallet *model.Wallet) error
 	FindByID(id string) (*model.Wallet, error)
 	Delete(id string) error
-	
+
 	// 必要的Domain查詢
 	FindByIDWithTransactions(id string) (*model.Wallet, error) // 載入完整聚合
-	FindByUserID(userID string) ([]*model.Wallet, error)      // 用戶的所有錢包
+	FindByUserID(userID string) ([]*model.Wallet, error)       // 用戶的所有錢包
 }
 
 // ExpenseCategoryRepositoryPeer 支出分類第二層儲存實現的橋接介面
@@ -68,7 +70,7 @@ type ExpenseCategoryRepository interface {
 	Save(category *model.ExpenseCategory) error
 	FindByID(id string) (*model.ExpenseCategory, error)
 	Delete(id string) error
-	
+
 	// 必要的Domain查詢
 	FindBySubcategoryID(subcategoryID string) (*model.ExpenseCategory, error) // 透過子分類找父分類
 	FindByUserID(userID string) ([]*model.ExpenseCategory, error)             // 用戶的所有分類
@@ -95,7 +97,7 @@ type IncomeCategoryRepository interface {
 	Save(category *model.IncomeCategory) error
 	FindByID(id string) (*model.IncomeCategory, error)
 	Delete(id string) error
-	
+
 	// 必要的Domain查詢
 	FindBySubcategoryID(subcategoryID string) (*model.IncomeCategory, error) // 透過子分類找父分類
 	FindByUserID(userID string) ([]*model.IncomeCategory, error)             // 用戶的所有分類

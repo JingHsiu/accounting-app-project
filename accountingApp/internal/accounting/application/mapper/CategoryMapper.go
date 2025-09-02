@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"time"
+	"github.com/JingHsiu/accountingApp/internal/accounting/adapter/store"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 )
 
@@ -163,6 +164,12 @@ func (m *IncomeCategoryMapper) ToSubcategoryDomain(data IncomeSubcategoryData) (
 	}, nil
 }
 
-// 確保Mapper實現介面
+// 確保CategoryData實現AggregateData介面
+var _ store.AggregateData = (*ExpenseCategoryData)(nil)
+var _ store.AggregateData = (*IncomeCategoryData)(nil)
+
+// 確保Mapper實現AggregateMapper介面
 var _ Mapper[*model.ExpenseCategory, ExpenseCategoryData] = (*ExpenseCategoryMapper)(nil)
 var _ Mapper[*model.IncomeCategory, IncomeCategoryData] = (*IncomeCategoryMapper)(nil)
+var _ store.AggregateMapper[*model.ExpenseCategory, ExpenseCategoryData] = (*ExpenseCategoryMapper)(nil)
+var _ store.AggregateMapper[*model.IncomeCategory, IncomeCategoryData] = (*IncomeCategoryMapper)(nil)

@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"time"
+	"github.com/JingHsiu/accountingApp/internal/accounting/adapter/store"
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 )
 
@@ -67,5 +68,9 @@ func (m *WalletMapper) ToDomain(data WalletData) (*model.Wallet, error) {
 	}, nil
 }
 
-// 確保WalletMapper實現Mapper介面
+// 確保WalletData實現AggregateData介面
+var _ store.AggregateData = (*WalletData)(nil)
+
+// 確保WalletMapper實現Mapper介面和AggregateMapper介面
 var _ Mapper[*model.Wallet, WalletData] = (*WalletMapper)(nil)
+var _ store.AggregateMapper[*model.Wallet, WalletData] = (*WalletMapper)(nil)

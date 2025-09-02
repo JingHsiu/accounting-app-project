@@ -60,8 +60,11 @@ func (r *Router) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/v1/wallets/balance/", r.getWalletBalanceController.GetWalletBalance) // Specialized balance endpoint
 
 	// Category endpoints
-	mux.HandleFunc("/api/v1/categories/expense", r.categoryController.CreateExpenseCategory)
-	mux.HandleFunc("/api/v1/categories/income", r.categoryController.CreateIncomeCategory)
+	mux.HandleFunc("/api/v1/categories", r.handleCategoryCollection)                   // GET (with type param), POST
+	mux.HandleFunc("/api/v1/categories/", r.handleCategoryResource)                   // GET, PUT, DELETE by ID
+	mux.HandleFunc("/api/v1/categories/tree", r.handleCategoryTree)                   // GET category tree
+	mux.HandleFunc("/api/v1/categories/expense", r.categoryController.CreateExpenseCategory) // Legacy endpoint
+	mux.HandleFunc("/api/v1/categories/income", r.categoryController.CreateIncomeCategory)   // Legacy endpoint
 
 	// Transaction endpoints
 	mux.HandleFunc("/api/v1/expenses", r.addExpenseController.AddExpense)
@@ -98,6 +101,48 @@ func (r *Router) handleWalletResource(w http.ResponseWriter, req *http.Request) 
 		r.updateWalletController.UpdateWallet(w, req)
 	case http.MethodDelete:
 		r.deleteWalletController.DeleteWallet(w, req)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleCategoryCollection routes requests to /api/v1/categories
+func (r *Router) handleCategoryCollection(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		// TODO: Implement get all categories with optional type filter
+		http.Error(w, "Get categories endpoint not implemented", http.StatusNotImplemented)
+	case http.MethodPost:
+		// TODO: Implement generic create category
+		http.Error(w, "Create category endpoint not implemented", http.StatusNotImplemented)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleCategoryResource routes requests to /api/v1/categories/{categoryID}
+func (r *Router) handleCategoryResource(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		// TODO: Implement get category by ID
+		http.Error(w, "Get category by ID endpoint not implemented", http.StatusNotImplemented)
+	case http.MethodPut:
+		// TODO: Implement update category
+		http.Error(w, "Update category endpoint not implemented", http.StatusNotImplemented)
+	case http.MethodDelete:
+		// TODO: Implement delete category
+		http.Error(w, "Delete category endpoint not implemented", http.StatusNotImplemented)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleCategoryTree routes requests to /api/v1/categories/tree
+func (r *Router) handleCategoryTree(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		// TODO: Implement get category tree
+		http.Error(w, "Get category tree endpoint not implemented", http.StatusNotImplemented)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}

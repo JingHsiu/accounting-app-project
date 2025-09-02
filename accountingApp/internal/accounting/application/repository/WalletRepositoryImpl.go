@@ -5,11 +5,10 @@ import (
 	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
 )
 
-// WalletRepositoryImpl 第二層錢包儲存庫實現 (Application Layer)
-// 使用Bridge Pattern，透過peer介面橋接到第三層，避免直接依賴Domain Model
+// WalletRepositoryImpl Layer 2 (Application) 錢包儲存庫實現
 type WalletRepositoryImpl struct {
-	peer   WalletRepositoryPeer // 橋接到第三層的實現
-	mapper *mapper.WalletMapper // 負責Domain Model與Data結構轉換
+	peer   WalletRepositoryPeer // 橋接到Layer 3的實現
+	mapper *mapper.WalletMapper // AggregateMapper：Domain ↔ Data轉換
 }
 
 // NewWalletRepositoryImpl 創建錢包儲存庫實現
@@ -20,36 +19,45 @@ func NewWalletRepositoryImpl(peer WalletRepositoryPeer) WalletRepository {
 	}
 }
 
-// Save 儲存錢包Domain Model
-// 透過mapper轉換後，使用peer介面操作資料層
+// Save 儲存錢包Domain Model (狀態源模式)
+// 使用AggregateMapper轉換聚合狀態，透過peer介面橋接到AggregateStore
 func (r *WalletRepositoryImpl) Save(wallet *model.Wallet) error {
-	// Domain Model → Data結構
-	data := r.mapper.ToData(wallet)
-	
-	// 透過peer介面橋接到第四層儲存
-	return r.peer.SaveData(data)
+	// 使用AggregateMapper: Domain Aggregate → AggregateData
+	aggregateData := r.mapper.ToData(wallet)
+
+	// 透過peer介面橋接到Layer 3 → Layer 4的AggregateStore
+	err := r.peer.Save(aggregateData)
+	if err != nil {
+		// TODO: 包裝為Repository專用異常
+		return err
+	}
+
+	// 清除領域事件（如果將來添加事件源）
+	// wallet.ClearDomainEvents()
+
+	return nil
 }
 
 // FindByID 根據ID查找錢包Domain Model
 func (r *WalletRepositoryImpl) FindByID(id string) (*model.Wallet, error) {
-	// 透過peer介面從第四層取得資料
-	data, err := r.peer.FindDataByID(id)
+	// 透過peer介面從AggregateStore取得聚合狀態
+	aggregateData, err := r.peer.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
-	
-	if data == nil {
-		return nil, nil
+
+	if aggregateData == nil {
+		return nil, nil // 聚合不存在
 	}
-	
-	// Data結構 → Domain Model
-	return r.mapper.ToDomain(*data)
+
+	// 使用AggregateMapper: AggregateData → Domain Aggregate
+	return r.mapper.ToDomain(*aggregateData)
 }
 
 // Delete 刪除錢包
 func (r *WalletRepositoryImpl) Delete(id string) error {
-	// 透過peer介面橋接到第四層刪除
-	return r.peer.DeleteData(id)
+	// 透過peer介面橋接到AggregateStore刪除聚合狀態
+	return r.peer.Delete(id)
 }
 
 // FindByIDWithTransactions 根據ID查找錢包及所有交易記錄 (載入完整聚合)
@@ -63,14 +71,14 @@ func (r *WalletRepositoryImpl) FindByIDWithTransactions(id string) (*model.Walle
 	// 2. 載入交易記錄 (從相關的交易表中查詢)
 	// TODO: 實際實作需要查詢 expenses, incomes, transfers 表
 	// 目前先標記為已載入，避免編譯錯誤
-	// 
+	//
 	// 未來的實作應該包含:
 	// - 查詢 expenses 表: WHERE wallet_id = $1
-	// - 查詢 incomes 表: WHERE wallet_id = $1  
+	// - 查詢 incomes 表: WHERE wallet_id = $1
 	// - 查詢 transfers 表: WHERE from_wallet_id = $1 OR to_wallet_id = $1
 	// - 將查詢結果透過 mapper 轉換成 domain model
 	// - 使用 wallet.AddExpenseRecord(), wallet.AddIncomeRecord(), wallet.AddTransfer() 載入
-	
+
 	wallet.SetFullyLoaded(true)
 
 	return wallet, nil
@@ -78,41 +86,25 @@ func (r *WalletRepositoryImpl) FindByIDWithTransactions(id string) (*model.Walle
 
 // FindByUserID 根據UserID查找用戶的所有錢包
 func (r *WalletRepositoryImpl) FindByUserID(userID string) ([]*model.Wallet, error) {
-	// 透過peer介面從第四層取得資料
-	dataList, err := r.peer.FindDataByUserID(userID)
+	// 透過peer介面從AggregateStore取得聚合狀態列表
+	aggregateDataList, err := r.peer.FindByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
-	
-	// 將資料結構轉換為Domain Model
-	wallets := make([]*model.Wallet, len(dataList))
-	for i, data := range dataList {
-		wallet, err := r.mapper.ToDomain(data)
+
+	// 使用AggregateMapper批量轉換：AggregateData → Domain Aggregate
+	wallets := make([]*model.Wallet, len(aggregateDataList))
+	for i, aggregateData := range aggregateDataList {
+		wallet, err := r.mapper.ToDomain(aggregateData)
 		if err != nil {
 			return nil, err
 		}
 		wallets[i] = wallet
 	}
-	
+
 	return wallets, nil
 }
 
-// SaveData 實現WalletRepositoryPeer介面 - 直接委派給peer
-func (r *WalletRepositoryImpl) SaveData(data mapper.WalletData) error {
-	return r.peer.SaveData(data)
-}
-
-// FindDataByID 實現WalletRepositoryPeer介面 - 直接委派給peer
-func (r *WalletRepositoryImpl) FindDataByID(id string) (*mapper.WalletData, error) {
-	return r.peer.FindDataByID(id)
-}
-
-// FindDataByUserID 實現WalletRepositoryPeer介面 - 直接委派給peer
-func (r *WalletRepositoryImpl) FindDataByUserID(userID string) ([]mapper.WalletData, error) {
-	return r.peer.FindDataByUserID(userID)
-}
-
-// DeleteData 實現WalletRepositoryPeer介面 - 直接委派給peer
-func (r *WalletRepositoryImpl) DeleteData(id string) error {
-	return r.peer.DeleteData(id)
-}
+// 注意：移除了直接實現WalletRepositoryPeer介面的方法
+// Repository Impl (Layer 2) 只應該通過peer介面與Layer 3溝通
+// 避免破壞分層架構的依賴規則
