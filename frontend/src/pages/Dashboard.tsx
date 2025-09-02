@@ -11,6 +11,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui'
 import { dashboardService, walletService } from '@/services'
 import { formatMoney } from '@/utils/format'
+import WalletDebugPanel from '@/components/WalletDebugPanel'
 
 // Mock user ID for demo purposes
 const DEMO_USER_ID = "demo-user-123"
@@ -25,9 +26,25 @@ const Dashboard: React.FC = () => {
   const dashboardData = null
   const dashboardLoading = false
 
-  const { data: walletsData } = useQuery(
+  const { data: walletsData, isLoading: walletsLoading, error: walletsError } = useQuery(
     ['wallets', DEMO_USER_ID],
-    () => walletService.getWallets(DEMO_USER_ID)
+    () => walletService.getWallets(DEMO_USER_ID, 'Dashboard'),
+    {
+      onSuccess: (data) => {
+        console.group('✅ [Dashboard] React Query SUCCESS')
+        console.log('Dashboard wallets data:', {
+          data,
+          length: data?.length,
+          isArray: Array.isArray(data)
+        })
+        console.groupEnd()
+      },
+      onError: (error) => {
+        console.group('❌ [Dashboard] React Query ERROR')
+        console.error('Dashboard query error:', error)
+        console.groupEnd()
+      }
+    }
   )
 
   // TODO: Implement monthly stats visualization
@@ -37,7 +54,34 @@ const Dashboard: React.FC = () => {
   // )
 
   const dashboard = dashboardData?.data
-  const wallets = Array.isArray(walletsData?.data) ? walletsData.data : []
+  const wallets = Array.isArray(walletsData) ? walletsData : []
+  
+  // Enhanced debugging for Dashboard
+  console.group('🏠 [Dashboard] Component Render Debug')
+  console.log('Dashboard render analysis:', {
+    dashboardState: {
+      dashboardData,
+      dashboardLoading
+    },
+    walletsState: {
+      walletsData,
+      walletsDataType: typeof walletsData,
+      walletsIsArray: Array.isArray(walletsData),
+      walletsLength: walletsData?.length || 0,
+      walletsLoading,
+      walletsError: walletsError?.toString(),
+      processedWallets: wallets,
+      processedWalletsLength: wallets.length
+    },
+    renderDecision: {
+      willShowDashboardLoading: dashboardLoading,
+      willShowWalletsLoading: walletsLoading && !walletsError,
+      willShowWalletsError: !!walletsError,
+      willShowWallets: wallets.length > 0,
+      willShowEmptyWallets: !walletsLoading && !walletsError && wallets.length === 0
+    }
+  })
+  console.groupEnd()
 
   if (dashboardLoading) {
     return (
@@ -153,7 +197,13 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {wallets.map((wallet) => (
+                {walletsLoading && (
+                  <div className="text-center py-4 text-neutral-500">載入中...</div>
+                )}
+                {walletsError && (
+                  <div className="text-center py-4 text-red-500">載入錢包失敗</div>
+                )}
+                {!walletsLoading && !walletsError && wallets.map((wallet) => (
                   <div key={wallet.id} className="flex items-center justify-between p-4 bg-white/50 rounded-lg border border-primary-100">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-primary-100 rounded-lg">
@@ -171,7 +221,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                {wallets.length === 0 && (
+                {!walletsLoading && !walletsError && wallets.length === 0 && (
                   <div className="text-center py-8">
                     <Wallet className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
                     <p className="text-neutral-500">尚未建立錢包</p>
@@ -269,6 +319,9 @@ const Dashboard: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      
+      {/* Debug Panel */}
+      <WalletDebugPanel userID={DEMO_USER_ID} show={false} />
     </div>
   )
 }

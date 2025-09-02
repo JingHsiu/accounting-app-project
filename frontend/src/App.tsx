@@ -7,6 +7,8 @@ import Dashboard from '@/pages/Dashboard'
 import Wallets from '@/pages/Wallets'
 import Transactions from '@/pages/Transactions'
 import Categories from '@/pages/Categories'
+import TestWallets from '@/TestWallets'
+import DebugWallets from '@/DebugWallets'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +31,8 @@ function App() {
               <Route path="/wallets" element={<Wallets />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/categories" element={<Categories />} />
+              <Route path="/test-wallets" element={<TestWallets />} />
+              <Route path="/debug-wallets" element={<DebugWallets />} />
             </Routes>
           </Layout>
         </div>

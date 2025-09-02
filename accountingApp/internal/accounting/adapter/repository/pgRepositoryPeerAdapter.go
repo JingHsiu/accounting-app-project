@@ -1,4 +1,4 @@
-package adapter
+package repository
 
 import (
 	"github.com/JingHsiu/accountingApp/internal/accounting/adapter/store"
@@ -7,14 +7,14 @@ import (
 )
 
 // PgWalletRepositoryPeerAdapter Layer 3 (Adapter) 實現
-// 使用AggregateStore抽象，遵循正確分層：Peer (Layer 3) → AggregateStore (Layer 4)
+// 使用QueryAggregateStore抽象，遵循正確分層：Peer (Layer 3) → AggregateStore (Layer 4)
 type PgWalletRepositoryPeerAdapter struct {
-	walletStore store.AggregateStore[mapper.WalletData] // AggregateStore抽象
+	walletStore store.QueryAggregateStore[mapper.WalletData] // QueryAggregateStore抽象
 }
 
 // NewPgWalletRepositoryPeerAdapter 創建PostgreSQL錢包儲存實現
-// 接受AggregateStore，遵循依賴反轉原則
-func NewPgWalletRepositoryPeerAdapter(walletStore store.AggregateStore[mapper.WalletData]) repository.WalletRepositoryPeer {
+// 接受QueryAggregateStore，遵循依賴反轉原則
+func NewPgWalletRepositoryPeerAdapter(walletStore store.QueryAggregateStore[mapper.WalletData]) repository.WalletRepositoryPeer {
 	return &PgWalletRepositoryPeerAdapter{
 		walletStore: walletStore,
 	}
@@ -37,9 +37,10 @@ func (p *PgWalletRepositoryPeerAdapter) Delete(id string) error {
 
 // FindByUserID 根據UserID查找用戶的所有錢包聚合狀態 (實現WalletRepositoryPeer介面)
 func (p *PgWalletRepositoryPeerAdapter) FindByUserID(userID string) ([]mapper.WalletData, error) {
-	// 這個方法需要自定義查詢實現
-	// 在架構設計中，這應該透過 AggregateStore 的擴展介面來實現
-	// 或者透過組合模式添加自定義查詢能力
-	return nil, nil // TODO: 需要實現自定義查詢邏輯
+	// 使用QueryAggregateStore的FindBy方法查詢用戶的所有錢包
+	criteria := map[string]interface{}{
+		"user_id": userID,
+	}
+	
+	return p.walletStore.FindBy(criteria)
 }
-
