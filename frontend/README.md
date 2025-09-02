@@ -1,6 +1,9 @@
-# 記帳管理系統 Frontend
+# Accounting App Frontend
 
-使用 React + TypeScript 開發的理財管理系統前端，採用淺粉紫色主題設計。
+React + TypeScript frontend for the personal accounting management system with clean glass-morphism design.
+
+> **📚 For complete project documentation**: See [../README.md](../README.md)  
+> **🔌 For API integration guide**: See [../docs/FRONTEND_INTEGRATION_GUIDE.md](../docs/FRONTEND_INTEGRATION_GUIDE.md)
 
 ## 🚀 技術棧
 
@@ -45,27 +48,35 @@
 - 直觀的色彩區分（收入綠色、支出紅色）
 - 側邊欄導航
 
-## 🛠️ 開發指南
+## 🛠️ Quick Start
 
-### 安裝依賴
+### Prerequisites
+- Node.js 16+ and npm
+- Backend API running on localhost:8080
+
+### Development Workflow
 ```bash
+# Install dependencies
 npm install
-```
 
-### 開發模式
-```bash
+# Start development server (localhost:3000)
 npm run dev
-```
 
-### 構建生產版本
-```bash
+# Build for production
 npm run build
+
+# Run linting
+npm run lint
+
+# Preview production build
+npm run preview
 ```
 
-### 代碼檢查
-```bash
-npm run lint
-```
+### First-Time Setup
+1. Ensure backend is running: `cd ../accountingApp && go run cmd/accountingApp/main.go`
+2. Start frontend: `npm run dev`
+3. Open http://localhost:3000
+4. Backend API will be available at http://localhost:8080/api/v1
 
 ## 📁 項目結構
 
@@ -114,19 +125,28 @@ src/
 - 玻璃態效果工具類
 - 動畫和漸變配置
 
-## 🌐 API 集成
+## 🌐 API Integration
 
-前端通過 Axios 與後端 Go 服務通信：
+The frontend communicates with the Go backend through a centralized API client:
 
-- **錢包 API**: `/api/wallets`
-- **交易 API**: `/api/expenses`, `/api/incomes`, `/api/transfers`
-- **類別 API**: `/api/categories`
-- **儀表板 API**: `/api/dashboard`
+### API Configuration
+- **Base URL**: `http://localhost:8080/api/v1`
+- **Response Format**: `{success: boolean, data: T, error?: string}`
+- **Error Handling**: Unified error responses with detailed messages
 
-### 請求攔截器
-- 自動添加認證 token
-- 統一錯誤處理
-- 401 自動跳轉登入
+### Key Services
+- **walletService.ts** - Wallet CRUD operations
+- **transactionService.ts** - Expenses and income management  
+- **categoryService.ts** - Category management
+- **dashboardService.ts** - Dashboard data aggregation
+
+### HTTP Client Features
+- Automatic request/response interceptors
+- Standardized error handling
+- TypeScript type safety
+- Response data unwrapping
+
+> **📖 Complete API Reference**: [../docs/api/API_DOCUMENTATION.md](../docs/api/API_DOCUMENTATION.md)
 
 ## 📝 組件說明
 
@@ -152,12 +172,31 @@ src/
 - [ ] 性能優化和懶加載
 - [ ] 導入/導出功能
 
-## 🐛 已知問題
+## 🔍 Debugging & Troubleshooting
 
-- 部分 npm 依賴版本過舊的警告
-- PostCSS 配置警告（不影響功能）
-- 待實現圖表組件整合
+### Common Issues
+- **API Connection Errors**: Ensure backend is running on localhost:8080
+- **Response Structure Issues**: Check console logs for detailed API responses
+- **Build Warnings**: Non-critical PostCSS warnings can be ignored
+- **Dependency Warnings**: Some dev dependencies have minor version warnings
 
-## 📄 許可證
+### Debug Tools Available
+- React Developer Tools (browser extension)
+- Network tab for API debugging
+- Console logs in walletService for API responses
+- Debug components for testing API integration
 
-MIT License - 詳見 LICENSE 文件
+> **🐛 Complete Debugging Guide**: [../docs/DEBUG_INSTRUCTIONS.md](../docs/DEBUG_INSTRUCTIONS.md)
+
+## 📚 Additional Resources
+
+- **Project Architecture**: [../docs/SYSTEM-ARCHITECTURE.md](../docs/SYSTEM-ARCHITECTURE.md)
+- **API Documentation**: [../docs/api/API_DOCUMENTATION.md](../docs/api/API_DOCUMENTATION.md)
+- **Integration Guide**: [../docs/FRONTEND_INTEGRATION_GUIDE.md](../docs/FRONTEND_INTEGRATION_GUIDE.md)
+- **Main Project README**: [../README.md](../README.md)
+
+---
+
+**Frontend Development Team**  
+**Framework**: React 18 + TypeScript + Vite  
+**Updated**: January 2025
