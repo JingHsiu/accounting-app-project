@@ -1,10 +1,10 @@
 # Accounting App Documentation
 
-Complete documentation for the Accounting App backend and frontend integration.
+Complete documentation for the Accounting App project - a modern financial management system built with Go backend and React frontend.
 
 ## 📚 Documentation Overview
 
-This directory contains comprehensive documentation for developers working with the Accounting App.
+This directory contains comprehensive documentation for developers, architects, and stakeholders working with the Accounting App.
 
 ### 📁 Documentation Structure
 
@@ -12,26 +12,31 @@ This directory contains comprehensive documentation for developers working with 
 docs/
 ├── README.md                           # This file - documentation index
 ├── SYSTEM-ARCHITECTURE.md             # Complete system architecture overview
-├── api/
-│   ├── API_DOCUMENTATION.md           # Complete backend API reference
-│   └── QUICK_REFERENCE.md             # Fast API lookup table
-└── frontend/
-    └── FRONTEND_INTEGRATION_GUIDE.md  # Frontend integration guide
+├── FRONTEND_INTEGRATION_GUIDE.md      # Frontend integration guide
+├── DEBUG_INSTRUCTIONS.md              # Debug and troubleshooting guide
+└── api/
+    ├── API_DOCUMENTATION.md           # Complete backend API reference
+    └── QUICK_REFERENCE.md             # Fast API lookup table
 ```
 
 ---
 
 ## 🚀 Quick Start
 
+### For New Developers
+- **Architecture Overview**: Start with [`SYSTEM-ARCHITECTURE.md`](SYSTEM-ARCHITECTURE.md) for comprehensive system understanding
+- **API Reference**: See [`api/API_DOCUMENTATION.md`](api/API_DOCUMENTATION.md) for complete endpoint documentation
+- **Frontend Integration**: See [`FRONTEND_INTEGRATION_GUIDE.md`](FRONTEND_INTEGRATION_GUIDE.md) for React/TypeScript setup
+
 ### For Backend Developers
 - **API Reference**: See [`api/API_DOCUMENTATION.md`](api/API_DOCUMENTATION.md) for complete endpoint documentation
-- **Architecture**: See [`SYSTEM-ARCHITECTURE.md`](SYSTEM-ARCHITECTURE.md) for comprehensive system architecture
-- **Development Guide**: See [`../CLAUDE.md`](../CLAUDE.md) for development commands and setup
+- **Quick Reference**: See [`api/QUICK_REFERENCE.md`](api/QUICK_REFERENCE.md) for fast API lookups
+- **Architecture**: See [`SYSTEM-ARCHITECTURE.md`](SYSTEM-ARCHITECTURE.md) for Clean Architecture implementation
 
 ### For Frontend Developers
-- **Integration Guide**: See [`frontend/FRONTEND_INTEGRATION_GUIDE.md`](frontend/FRONTEND_INTEGRATION_GUIDE.md) for complete frontend setup
+- **Integration Guide**: See [`FRONTEND_INTEGRATION_GUIDE.md`](FRONTEND_INTEGRATION_GUIDE.md) for React/TypeScript implementation
 - **API Reference**: See [`api/API_DOCUMENTATION.md`](api/API_DOCUMENTATION.md) for endpoint details
-- **System Overview**: See [`SYSTEM-ARCHITECTURE.md`](SYSTEM-ARCHITECTURE.md) for complete system understanding
+- **Debug Guide**: See [`DEBUG_INSTRUCTIONS.md`](DEBUG_INSTRUCTIONS.md) for troubleshooting
 
 ---
 
@@ -68,7 +73,7 @@ Complete backend API reference for the accounting application.
 
 ---
 
-### 🌐 [Frontend Integration Guide](frontend/FRONTEND_INTEGRATION_GUIDE.md)
+### 🌐 [Frontend Integration Guide](FRONTEND_INTEGRATION_GUIDE.md)
 Production-ready TypeScript implementation guide for frontend developers.
 
 **Contents:**
@@ -81,6 +86,19 @@ Production-ready TypeScript implementation guide for frontend developers.
 - **Testing Examples** - Unit tests for services and components
 
 **Target Audience:** Frontend developers, React/TypeScript developers
+
+---
+
+### 🐛 [Debug Instructions](DEBUG_INSTRUCTIONS.md)
+Troubleshooting guide for development and debugging.
+
+**Contents:**
+- **Frontend Debugging** - React Developer Tools, network debugging
+- **Backend Debugging** - Go debugging, database troubleshooting
+- **Common Issues** - Known problems and solutions
+- **Testing Tools** - Debug components and utilities
+
+**Target Audience:** All developers, QA engineers
 
 ---
 
@@ -129,7 +147,7 @@ go test ./...
 ### Frontend Setup
 ```bash
 # Navigate to frontend directory
-cd ../frontend
+cd frontend
 
 # Install dependencies
 npm install
@@ -244,12 +262,13 @@ curl -X POST http://localhost:8080/api/v1/expenses \
 
 For questions about:
 - **API Usage**: See [API Documentation](api/API_DOCUMENTATION.md)
-- **Frontend Integration**: See [Frontend Guide](frontend/FRONTEND_INTEGRATION_GUIDE.md)
-- **Architecture**: See [CLAUDE.md](../CLAUDE.md)
+- **Frontend Integration**: See [Frontend Integration Guide](FRONTEND_INTEGRATION_GUIDE.md)
+- **System Architecture**: See [System Architecture](SYSTEM-ARCHITECTURE.md)
+- **Debugging**: See [Debug Instructions](DEBUG_INSTRUCTIONS.md)
 - **Development Setup**: See this README
 
 ---
 
-**Last Updated:** January 2024  
+**Last Updated:** January 2025  
 **Version:** v1.0  
 **API Version:** v1
