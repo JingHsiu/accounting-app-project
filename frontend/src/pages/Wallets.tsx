@@ -14,6 +14,7 @@ import { walletService } from '@/services'
 import { formatMoney, getWalletTypeDisplayName } from '@/utils/format'
 import type { CreateWalletRequest } from '@/services/walletService'
 import { WalletType } from '@/types'
+import WalletDebugPanel from '@/components/WalletDebugPanel'
 
 const DEMO_USER_ID = "demo-user-123"
 
@@ -29,20 +30,81 @@ const Wallets: React.FC = () => {
 
   const queryClient = useQueryClient()
 
-  // Queries
-  const { data: walletsData, isLoading } = useQuery(
+  // Queries with comprehensive debugging
+  const { data: walletsData, isLoading, error, dataUpdatedAt, isStale, isFetching } = useQuery(
     ['wallets', DEMO_USER_ID],
-    () => walletService.getWallets(DEMO_USER_ID)
+    () => walletService.getWallets(DEMO_USER_ID, 'WalletsPage'),
+    {
+      onSuccess: (data) => {
+        console.group('✅ [WalletsPage] React Query SUCCESS')
+        console.log('Success data received:', {
+          data,
+          dataType: typeof data,
+          isArray: Array.isArray(data),
+          length: data?.length,
+          firstItem: data?.[0]
+        })
+        console.groupEnd()
+      },
+      onError: (error) => {
+        console.group('❌ [WalletsPage] React Query ERROR')
+        console.error('Query error:', {
+          error,
+          errorType: typeof error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error'
+        })
+        console.groupEnd()
+      },
+      onSettled: (data, error) => {
+        console.group('🏁 [WalletsPage] React Query SETTLED')
+        console.log('Query settled:', {
+          hasData: !!data,
+          hasError: !!error,
+          dataLength: data?.length,
+          errorMessage: error instanceof Error ? error.message : error
+        })
+        console.groupEnd()
+      },
+      staleTime: 0, // Always refetch
+      cacheTime: 0  // Don't cache for debugging
+    }
   )
 
   // Mutations
   const createWalletMutation = useMutation(
     (wallet: CreateWalletRequest) => walletService.createWallet(wallet),
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.group('✅ [WalletsPage] Create Wallet SUCCESS')
+        console.log('Mutation success data:', data)
+        console.log('Invalidating wallet cache and refreshing...')
         queryClient.invalidateQueries(['wallets', DEMO_USER_ID])
         setShowCreateModal(false)
         resetForm()
+        console.groupEnd()
+      },
+      onError: (error) => {
+        console.group('❌ [WalletsPage] Create Wallet ERROR')
+        console.error('Mutation error:', {
+          error,
+          errorType: typeof error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error'
+        })
+        console.groupEnd()
+      },
+      onMutate: (wallet) => {
+        console.group('🚀 [WalletsPage] Create Wallet MUTATE')
+        console.log('Starting wallet creation:', wallet)
+        console.groupEnd()
+      },
+      onSettled: (data, error) => {
+        console.group('🏁 [WalletsPage] Create Wallet SETTLED')
+        console.log('Mutation settled:', { 
+          hasData: !!data, 
+          hasError: !!error,
+          currentWalletsCount: wallets.length 
+        })
+        console.groupEnd()
       }
     }
   )
@@ -72,7 +134,38 @@ const Wallets: React.FC = () => {
     }
   )
 
-  const wallets = walletsData?.data || []
+  // wallets data is now directly returned from the service  
+  const wallets = walletsData || []
+  
+  // Enhanced component render debugging
+  console.group('🔄 [WalletsPage] Component Render Debug')
+  console.log('Render state analysis:', {
+    queryState: {
+      isLoading,
+      isFetching,
+      isStale,
+      error: error?.toString(),
+      dataUpdatedAt: new Date(dataUpdatedAt || 0).toLocaleTimeString(),
+      hasError: !!error
+    },
+    dataAnalysis: {
+      walletsData,
+      walletsDataType: typeof walletsData,
+      walletsDataIsArray: Array.isArray(walletsData),
+      walletsDataLength: walletsData?.length,
+      processedWallets: wallets,
+      processedWalletsLength: wallets.length,
+      processedWalletsType: typeof wallets,
+      firstWallet: wallets[0]
+    },
+    renderDecision: {
+      willShowLoading: isLoading,
+      willShowWallets: wallets.length > 0,
+      willShowEmptyState: !isLoading && wallets.length === 0,
+      willShowError: !!error
+    }
+  })
+  console.groupEnd()
 
   const resetForm = () => {
     setFormData({ name: '', type: WalletType.CASH, currency: 'TWD', initialBalance: 0 })
@@ -81,18 +174,34 @@ const Wallets: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('🚀 HandleSubmit called with formData:', formData)
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      console.error('❌ Wallet name is required')
+      return
+    }
     
     if (editingWallet) {
+      console.log('📝 Updating wallet:', editingWallet)
       updateWalletMutation.mutate({
         walletID: editingWallet,
         updates: {
-          name: formData.name,
+          name: formData.name.trim(),
           type: formData.type
         }
       })
     } else {
+      console.log('➕ Creating new wallet with payload:', {
+        name: formData.name.trim(),
+        type: formData.type,
+        currency: formData.currency,
+        user_id: DEMO_USER_ID,
+        initialBalance: formData.initialBalance
+      })
+      
       createWalletMutation.mutate({
-        name: formData.name,
+        name: formData.name.trim(),
         type: formData.type,
         currency: formData.currency,
         user_id: DEMO_USER_ID,
@@ -131,9 +240,21 @@ const Wallets: React.FC = () => {
     { value: 'CNY', label: '人民幣 (CNY)' }
   ]
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
+        {/* Header with loading state */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-primary">錢包管理</h1>
+            <p className="text-neutral-600 mt-1 flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
+              正在載入錢包資料...
+            </p>
+          </div>
+        </div>
+        
+        {/* Loading skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i} glass className="animate-pulse">
@@ -141,6 +262,42 @@ const Wallets: React.FC = () => {
             </Card>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-primary">錢包管理</h1>
+            <p className="text-neutral-600 mt-1">管理您的錢包和帳戶</p>
+          </div>
+        </div>
+        
+        <Card glass className="text-center py-12">
+          <CardContent>
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">❌</span>
+            </div>
+            <h3 className="text-lg font-medium text-red-700 mb-2">載入錢包失敗</h3>
+            <p className="text-red-600 mb-4">
+              {error instanceof Error ? error.message : '發生未知錯誤'}
+            </p>
+            <Button 
+              variant="secondary"
+              onClick={() => {
+                console.log('🔄 Retry button clicked')
+                // Force refetch
+                queryClient.invalidateQueries(['wallets', DEMO_USER_ID])
+              }}
+            >
+              重新載入
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -155,7 +312,10 @@ const Wallets: React.FC = () => {
         </div>
         <Button 
           variant="primary"
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            console.log('🎯 Create wallet button clicked (header)')
+            setShowCreateModal(true)
+          }}
         >
           <Plus className="w-4 h-4" />
           新增錢包
@@ -225,9 +385,28 @@ const Wallets: React.FC = () => {
             <WalletIcon className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-neutral-700 mb-2">尚無錢包</h3>
             <p className="text-neutral-500 mb-6">建立您的第一個錢包開始記帳</p>
+            
+            {/* Debug info for empty state */}
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-left">
+              <h4 className="font-semibold text-yellow-800 mb-2">🔍 調試資訊 (空狀態)</h4>
+              <div className="space-y-1 text-yellow-700">
+                <div>walletsData 類型: {typeof walletsData}</div>
+                <div>walletsData 是否為陣列: {String(Array.isArray(walletsData))}</div>
+                <div>walletsData 長度: {walletsData?.length || 'undefined'}</div>
+                <div>處理後 wallets 長度: {wallets.length}</div>
+                <div>是否載入中: {String(isLoading)}</div>
+                <div>是否有錯誤: {String(!!error)}</div>
+                <div>walletsData 內容: {JSON.stringify(walletsData, null, 2)}</div>
+              </div>
+            </div>
+            
             <Button 
               variant="primary"
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                console.log('🎯 Create wallet button clicked (empty state)')
+                console.log('Current debug state:', { walletsData, wallets, isLoading, error })
+                setShowCreateModal(true)
+              }}
             >
               <Plus className="w-4 h-4" />
               建立錢包
@@ -310,8 +489,8 @@ const Wallets: React.FC = () => {
                 <div>
                   <span className="text-neutral-500">當前餘額：</span>
                   <span className="font-medium">{
-                    walletsData?.data?.find(w => w.id === editingWallet)?.balance 
-                      ? formatMoney(walletsData.data.find(w => w.id === editingWallet)!.balance)
+                    walletsData?.find(w => w.id === editingWallet)?.balance 
+                      ? formatMoney(walletsData.find(w => w.id === editingWallet)!.balance)
                       : '載入中...'
                   }</span>
                 </div>
@@ -345,6 +524,9 @@ const Wallets: React.FC = () => {
           </div>
         </form>
       </Modal>
+      
+      {/* Debug Panel */}
+      <WalletDebugPanel userID={DEMO_USER_ID} show={false} />
     </div>
   )
 }
