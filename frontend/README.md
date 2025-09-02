@@ -1,4 +1,4 @@
-# 理財管理系統 Frontend
+# 記帳管理系統 Frontend
 
 使用 React + TypeScript 開發的理財管理系統前端，採用淺粉紫色主題設計。
 
