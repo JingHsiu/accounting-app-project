@@ -34,8 +34,8 @@ export interface Category {
 }
 
 export enum CategoryType {
-  INCOME = "INCOME",
-  EXPENSE = "EXPENSE"
+  INCOME = "income",
+  EXPENSE = "expense"
 }
 
 export interface ExpenseRecord {
@@ -93,6 +93,54 @@ export interface TransactionFilters {
   startDate?: string;
   endDate?: string;
   type?: 'income' | 'expense' | 'transfer';
+}
+
+// API Request Types for Income and Expense operations
+export interface CreateIncomeRequest {
+  wallet_id: string;
+  subcategory_id: string;
+  amount: number;
+  currency: string;
+  description: string;
+  date: string;
+}
+
+export interface UpdateIncomeRequest {
+  walletID?: string;
+  categoryID?: string;
+  amount?: number;
+  currency?: string;
+  description?: string;
+  date?: string;
+}
+
+export interface CreateExpenseRequest {
+  walletID: string;
+  categoryID: string;
+  amount: number;
+  currency: string;
+  description: string;
+  date: string;
+}
+
+export interface UpdateExpenseRequest {
+  walletID?: string;
+  categoryID?: string;
+  amount?: number;
+  currency?: string;
+  description?: string;
+  date?: string;
+}
+
+// Transaction Query Filters
+export interface IncomeExpenseFilters {
+  walletID?: string;
+  categoryID?: string;
+  startDate?: string;
+  endDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  description?: string;
 }
 
 // Note: WalletType and CategoryType are already exported above as enums

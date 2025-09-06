@@ -22,7 +22,7 @@ export const walletService = {
     try {
       // Step 1: Make API call
       console.log('📡 Step 1: Making API request...')
-      const response = await apiRequest.get<{data: Wallet[], count: number}>(`/wallets?userID=${userID}`)
+      const response = await apiRequest.get<Wallet[]>(`/wallets?userID=${userID}`)
       
       // Step 2: Check response success
       if (!response.success) {
@@ -37,44 +37,16 @@ export const walletService = {
         throw new Error('No data received from server')
       }
 
-      // Step 3: Extract wallet array (apiRequest.get now handles unwrapping)
-      let walletArray: Wallet[] = []
-      
-      if (Array.isArray(response.data)) {
-        // Direct array format
-        console.log('📊 Step 3: Direct array format detected')
-        walletArray = response.data
-      } else if (response.data && typeof response.data === 'object') {
-        // Expected format: {data: [...], count: number}
-        console.log('📊 Step 3: Nested data structure:', {
-          hasDataArray: Array.isArray((response.data as any).data),
-          dataLength: (response.data as any).data?.length || 0,
-          count: (response.data as any).count
-        })
-        
-        if (Array.isArray((response.data as any).data)) {
-          walletArray = (response.data as any).data
-        } else {
-          console.error('❌ Unrecognized data structure:', response.data)
-          console.groupEnd()
-          throw new Error('Invalid data structure: unable to extract wallet array')
-        }
-      } else {
-        console.error('❌ Invalid response data format:', typeof response.data)
-        console.groupEnd()
-        throw new Error('Invalid data structure: expected object or array')
-      }
-
-      // Step 4: Validate and return
-      if (!Array.isArray(walletArray)) {
-        console.error('❌ Extracted data is not an array:', typeof walletArray)
+      // Step 3: Validate wallet array (apiRequest.get handles unwrapping)
+      if (!Array.isArray(response.data)) {
+        console.error('❌ Response data is not an array:', typeof response.data)
         console.groupEnd()
         throw new Error('Invalid data structure: expected array of wallets')
       }
 
-      console.log('✅ Returning wallet array:', walletArray.length, 'wallets')
+      console.log('✅ Returning wallet array:', response.data.length, 'wallets')
       console.groupEnd()
-      return walletArray
+      return response.data
       
     } catch (error) {
       console.error('💥 Exception in getWallets:', error)
@@ -90,7 +62,7 @@ export const walletService = {
 
   // Get a specific wallet with transactions
   getWallet: async (walletID: string): Promise<ApiResponse<Wallet>> => {
-    const response = await apiRequest.get<{data: Wallet}>(`/wallets/${walletID}`)
+    const response = await apiRequest.get<Wallet>(`/wallets/${walletID}`)
     
     if (!response.success) {
       return {
@@ -106,21 +78,8 @@ export const walletService = {
       }
     }
 
-    // apiRequest.get now handles unwrapping, check if we have wallet data directly
-    let wallet: Wallet | null = null
-    
-    if (response.data && typeof response.data === 'object') {
-      // Check for nested format: {data: wallet}
-      if ((response.data as any).data && typeof (response.data as any).data === 'object') {
-        wallet = (response.data as any).data
-      } 
-      // Check for direct wallet format: wallet object
-      else if ((response.data as any).id && (response.data as any).name) {
-        wallet = response.data as Wallet
-      }
-    }
-
-    if (!wallet) {
+    // Validate wallet object structure
+    if (!response.data.id || !response.data.name) {
       return {
         success: false,
         error: 'Invalid wallet data structure received'
@@ -129,7 +88,7 @@ export const walletService = {
 
     return {
       success: true,
-      data: wallet
+      data: response.data
     }
   },
 
@@ -150,7 +109,7 @@ export const walletService = {
 
   // Update wallet details  
   updateWallet: async (walletID: string, updates: UpdateWalletRequest): Promise<ApiResponse<Wallet>> => {
-    const response = await apiRequest.put<{data: Wallet}>(`/wallets/${walletID}`, updates)
+    const response = await apiRequest.put<Wallet>(`/wallets/${walletID}`, updates)
     
     if (!response.success) {
       return {
@@ -166,21 +125,8 @@ export const walletService = {
       }
     }
 
-    // Handle different response formats defensively
-    let wallet: Wallet | null = null
-    
-    if (response.data && typeof response.data === 'object') {
-      // Check for double-wrapped format: {success: true, data: {data: wallet}}
-      if ((response.data as any).data && typeof (response.data as any).data === 'object') {
-        wallet = (response.data as any).data
-      } 
-      // Check for direct wallet format: {success: true, data: wallet}
-      else if ((response.data as any).id && (response.data as any).name) {
-        wallet = response.data as Wallet
-      }
-    }
-
-    if (!wallet) {
+    // Validate wallet object structure
+    if (!response.data.id || !response.data.name) {
       return {
         success: false,
         error: 'Invalid wallet data structure received'
@@ -189,13 +135,13 @@ export const walletService = {
 
     return {
       success: true,
-      data: wallet
+      data: response.data
     }
   },
 
   // Delete a wallet
   deleteWallet: async (walletID: string): Promise<ApiResponse<void>> => {
-    const response = await apiRequest.delete<{data: {message: string}}>(`/wallets/${walletID}`)
+    const response = await apiRequest.delete<{message: string}>(`/wallets/${walletID}`)
     
     if (!response.success) {
       return {
@@ -204,25 +150,9 @@ export const walletService = {
       }
     }
 
-    if (!response.data) {
-      return {
-        success: false,
-        error: 'No data received from server'
-      }
-    }
-
-    // Handle different response formats defensively
     let message = 'Wallet deleted successfully'
-    
-    if (response.data && typeof response.data === 'object') {
-      // Check for double-wrapped format: {success: true, data: {data: {message: string}}}
-      if ((response.data as any).data && (response.data as any).data.message) {
-        message = (response.data as any).data.message
-      }
-      // Check for direct message format: {success: true, data: {message: string}}
-      else if ((response.data as any).message) {
-        message = (response.data as any).message
-      }
+    if (response.data && (response.data as any).message) {
+      message = (response.data as any).message
     }
 
     return {

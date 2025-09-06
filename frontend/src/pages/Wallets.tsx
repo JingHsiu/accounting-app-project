@@ -386,19 +386,6 @@ const Wallets: React.FC = () => {
             <h3 className="text-lg font-medium text-neutral-700 mb-2">尚無錢包</h3>
             <p className="text-neutral-500 mb-6">建立您的第一個錢包開始記帳</p>
             
-            {/* Debug info for empty state */}
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-left">
-              <h4 className="font-semibold text-yellow-800 mb-2">🔍 調試資訊 (空狀態)</h4>
-              <div className="space-y-1 text-yellow-700">
-                <div>walletsData 類型: {typeof walletsData}</div>
-                <div>walletsData 是否為陣列: {String(Array.isArray(walletsData))}</div>
-                <div>walletsData 長度: {walletsData?.length || 'undefined'}</div>
-                <div>處理後 wallets 長度: {wallets.length}</div>
-                <div>是否載入中: {String(isLoading)}</div>
-                <div>是否有錯誤: {String(!!error)}</div>
-                <div>walletsData 內容: {JSON.stringify(walletsData, null, 2)}</div>
-              </div>
-            </div>
             
             <Button 
               variant="primary"

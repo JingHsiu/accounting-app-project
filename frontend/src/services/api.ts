@@ -107,6 +107,18 @@ export const apiRequest = {
         data: response.data,
       }
     } catch (error: any) {
+      // Enhanced error context for better debugging
+      const errorContext = {
+        url,
+        method: 'GET',
+        statusCode: error.response?.status,
+        isNetworkError: !error.response,
+        isProxyError: error.code === 'ECONNREFUSED' || error.message?.includes('ECONNREFUSED'),
+        fullUrl: `${window.location.origin}${url}`
+      }
+      
+      console.error('🚨 API GET Error:', errorContext, error)
+      
       return {
         success: false,
         error: error.response?.data?.error || error.response?.data?.message || error.message,
