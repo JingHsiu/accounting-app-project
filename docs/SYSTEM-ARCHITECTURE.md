@@ -2,9 +2,9 @@
 
 > Comprehensive architectural overview of the Accounting App multi-service project implementing Clean Architecture, Domain-Driven Design, CQRS, and modern frontend patterns.
 
-**Last Updated**: 2025-08-12  
-**Architecture Version**: 1.0  
-**System Status**: Development Phase - Core architecture complete  
+**Last Updated**: 2025-01-06  
+**Architecture Version**: 1.1  
+**System Status**: Development Phase - Core API functional, frontend integration working  
 
 ## 📋 Table of Contents
 
@@ -487,20 +487,28 @@ export const walletService = {
 ```yaml
 Wallets:
   POST   /api/v1/wallets              # Create wallet
+  GET    /api/v1/wallets?userID={id}  # Get user wallets
+  GET    /api/v1/wallets/{id}         # Get single wallet
   GET    /api/v1/wallets/{id}/balance # Get balance
   PUT    /api/v1/wallets/{id}         # Update wallet (planned)
   DELETE /api/v1/wallets/{id}         # Delete wallet (planned)
 
 Categories:  
+  GET    /api/v1/categories           # Get all categories
+  GET    /api/v1/categories/expense   # Get expense categories  
+  GET    /api/v1/categories/income    # Get income categories
   POST   /api/v1/categories/expense   # Create expense category
   POST   /api/v1/categories/income    # Create income category
-  GET    /api/v1/categories          # List categories (planned)
 
 Transactions:
   POST   /api/v1/expenses            # Add expense
-  POST   /api/v1/incomes             # Add income  
+  POST   /api/v1/incomes             # Add income
+  GET    /api/v1/incomes?userID={id} # Get income records with filtering
   POST   /api/v1/transfers           # Process transfer (planned)
   GET    /api/v1/transactions        # List transactions (planned)
+
+Utility:
+  GET    /health                     # Health check
 ```
 
 #### Request/Response Format
@@ -508,8 +516,8 @@ Transactions:
 // Request Example - Create Wallet
 {
   "user_id": "user-123",
-  "name": "My Cash Wallet", 
-  "type": "CASH",
+  "name": "My Bank Account", 
+  "type": "BANK",
   "currency": "USD"
 }
 

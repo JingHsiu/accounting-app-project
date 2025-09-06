@@ -2,6 +2,8 @@
 
 React + TypeScript frontend for the personal accounting management system with clean glass-morphism design.
 
+> **✅ Status**: Core functionality working with Go backend integration
+
 > **📚 For complete project documentation**: See [../README.md](../README.md)  
 > **🔌 For API integration guide**: See [../docs/FRONTEND_INTEGRATION_GUIDE.md](../docs/FRONTEND_INTEGRATION_GUIDE.md)
 
@@ -133,12 +135,15 @@ The frontend communicates with the Go backend through a centralized API client:
 - **Base URL**: `http://localhost:8080/api/v1`
 - **Response Format**: `{success: boolean, data: T, error?: string}`
 - **Error Handling**: Unified error responses with detailed messages
+- **Wallet Types**: CASH, BANK, CREDIT, INVESTMENT (UPPERCASE only)
+- **Currency Format**: All amounts in smallest unit (cents for USD/EUR)
 
 ### Key Services
-- **walletService.ts** - Wallet CRUD operations
-- **transactionService.ts** - Expenses and income management  
-- **categoryService.ts** - Category management
-- **dashboardService.ts** - Dashboard data aggregation
+- **walletService.ts** - Wallet CRUD operations (functional)
+- **transactionService.ts** - Expenses and income management (functional)
+- **categoryService.ts** - Category management (functional)
+- **incomeService.ts** - Income queries with filtering (functional)
+- **dashboardService.ts** - Dashboard data aggregation (functional)
 
 ### HTTP Client Features
 - Automatic request/response interceptors

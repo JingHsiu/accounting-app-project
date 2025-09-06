@@ -2,6 +2,8 @@
 
 Complete guide for integrating with the Accounting App backend API from frontend applications.
 
+> **⚠️ Updated**: This guide now reflects the actual working API implementation as of January 2025.
+
 ## 🚀 Quick Start
 
 ### 1. API Client Setup
@@ -99,7 +101,7 @@ export interface Wallet {
   id: string;
   user_id: string;
   name: string;
-  type: string;
+  type: 'CASH' | 'BANK' | 'CREDIT' | 'INVESTMENT';  // UPPERCASE only
   currency: string;
   balance: {
     amount: number;
@@ -134,7 +136,7 @@ export interface Category {
 export interface CreateWalletRequest {
   user_id: string;
   name: string;
-  type: string;
+  type: 'CASH' | 'BANK' | 'CREDIT' | 'INVESTMENT';  // UPPERCASE only
   currency: string;
   initialBalance?: number;
 }
@@ -187,7 +189,7 @@ export class WalletService {
     return apiClient.post('/api/v1/wallets', walletData);
   }
 
-  async getUserWallets(userID: string): Promise<{ data: Wallet[]; count: number }> {
+  async getUserWallets(userID: string): Promise<Wallet[]> {
     return apiClient.get(`/api/v1/wallets?userID=${encodeURIComponent(userID)}`);
   }
 
@@ -239,6 +241,48 @@ export class TransactionService {
 export const transactionService = new TransactionService();
 ```
 
+## 🏆 Income Service Implementation
+
+Service for managing income queries:
+
+```typescript
+// src/services/incomeService.ts
+import { apiClient } from './apiClient';
+import type { IncomeRecord } from '../types/api';
+
+export interface GetIncomesFilters {
+  walletID?: string;
+  categoryID?: string;
+  startDate?: string;
+  endDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  description?: string;
+}
+
+export class IncomeService {
+  async getIncomes(userID: string, filters?: GetIncomesFilters): Promise<{
+    data: IncomeRecord[];
+    count: number;
+    message: string;
+  }> {
+    const params = new URLSearchParams({ userID });
+    
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined) {
+          params.append(key, value.toString());
+        }
+      });
+    }
+    
+    return apiClient.get(`/api/v1/incomes?${params}`);
+  }
+}
+
+export const incomeService = new IncomeService();
+```
+
 ## 🏷️ Category Service Implementation
 
 Service for category management:
@@ -249,6 +293,18 @@ import { apiClient } from './apiClient';
 import type { CreateCategoryRequest } from '../types/api';
 
 export class CategoryService {
+  async getAllCategories(): Promise<Category[]> {
+    return apiClient.get('/api/v1/categories');
+  }
+
+  async getExpenseCategories(): Promise<Category[]> {
+    return apiClient.get('/api/v1/categories/expense');
+  }
+
+  async getIncomeCategories(): Promise<Category[]> {
+    return apiClient.get('/api/v1/categories/income');
+  }
+
   async createExpenseCategory(categoryData: CreateCategoryRequest): Promise<{ id: string; message: string }> {
     return apiClient.post('/api/v1/categories/expense', categoryData);
   }
@@ -467,7 +523,7 @@ interface CreateWalletFormProps {
 export const CreateWalletForm: React.FC<CreateWalletFormProps> = ({ userID, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
-    type: 'checking',
+    type: 'BANK' as 'CASH' | 'BANK' | 'CREDIT' | 'INVESTMENT',
     currency: 'USD',
     initialBalance: '',
   });
@@ -496,7 +552,7 @@ export const CreateWalletForm: React.FC<CreateWalletFormProps> = ({ userID, onSu
       onSuccess?.(result.id);
       
       // Reset form
-      setFormData({ name: '', type: 'checking', currency: 'USD', initialBalance: '' });
+      setFormData({ name: '', type: 'BANK', currency: 'USD', initialBalance: '' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create wallet');
     } finally {
@@ -526,14 +582,13 @@ export const CreateWalletForm: React.FC<CreateWalletFormProps> = ({ userID, onSu
         <select
           id="type"
           value={formData.type}
-          onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
           required
         >
-          <option value="checking">Checking</option>
-          <option value="savings">Savings</option>
-          <option value="credit">Credit Card</option>
-          <option value="investment">Investment</option>
-          <option value="cash">Cash</option>
+          <option value="BANK">Bank Account</option>
+          <option value="CASH">Cash</option>
+          <option value="CREDIT">Credit Card</option>
+          <option value="INVESTMENT">Investment</option>
         </select>
       </div>
 

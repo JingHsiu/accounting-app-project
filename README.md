@@ -169,19 +169,23 @@ http://localhost:8080/api/v1
 ```
 
 ### Common Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/health` | Health check |
-| `POST` | `/wallets` | Create wallet |
-| `GET` | `/wallets?userID={id}` | Get user's wallets |
-| `GET` | `/wallets/{id}` | Get single wallet |
-| `PUT` | `/wallets/{id}` | Update wallet |
-| `DELETE` | `/wallets/{id}` | Delete wallet |
-| `GET` | `/wallets/{id}/balance` | Get wallet balance |
-| `POST` | `/expenses` | Add expense |
-| `POST` | `/incomes` | Add income |
-| `POST` | `/categories/expense` | Create expense category |
-| `POST` | `/categories/income` | Create income category |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|---------|
+| `GET` | `/health` | Health check | ✅ Working |
+| `POST` | `/wallets` | Create wallet | ✅ Working |
+| `GET` | `/wallets?userID={id}` | Get user's wallets | ✅ Working |
+| `GET` | `/wallets/{id}` | Get single wallet | ✅ Working |
+| `PUT` | `/wallets/{id}` | Update wallet | 🚧 Planned |
+| `DELETE` | `/wallets/{id}` | Delete wallet | 🚧 Planned |
+| `GET` | `/wallets/{id}/balance` | Get wallet balance | ✅ Working |
+| `POST` | `/expenses` | Add expense | ✅ Working |
+| `POST` | `/incomes` | Add income | ✅ Working |
+| `GET` | `/incomes?userID={id}` | Get income records | ✅ Working |
+| `GET` | `/categories` | Get all categories | ✅ Working |
+| `GET` | `/categories/expense` | Get expense categories | ✅ Working |
+| `GET` | `/categories/income` | Get income categories | ✅ Working |
+| `POST` | `/categories/expense` | Create expense category | ✅ Working |
+| `POST` | `/categories/income` | Create income category | ✅ Working |
 
 ### Response Format
 ```json
@@ -201,8 +205,8 @@ curl -X POST http://localhost:8080/api/v1/wallets \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "user-123",
-    "name": "My Checking Account",
-    "type": "checking",
+    "name": "My Bank Account",
+    "type": "BANK",
     "currency": "USD",
     "initialBalance": 100000
   }'

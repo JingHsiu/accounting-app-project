@@ -48,18 +48,26 @@ Create a new wallet for a user.
 {
   "user_id": "string",          // Required: User ID
   "name": "string",             // Required: Wallet name
-  "type": "string",             // Required: Wallet type (checking, savings, credit, etc.)
+  "type": "string",             // Required: CASH|BANK|CREDIT|INVESTMENT (uppercase only)
   "currency": "string",         // Required: Currency code (USD, TWD, etc.)
   "initialBalance": 0           // Optional: Initial balance in smallest currency unit (cents)
 }
 ```
+
+**Valid Wallet Types:**
+- `"CASH"` - Cash wallet
+- `"BANK"` - Bank account (checking/savings)
+- `"CREDIT"` - Credit card
+- `"INVESTMENT"` - Investment account
+
+**Important**: Wallet types must be provided in UPPERCASE only. Lowercase values will be rejected.
 
 **Response:**
 ```json
 {
   "id": "wallet-uuid",
   "success": true,
-  "message": "Wallet created successfully"
+  "message": ""
 }
 ```
 
@@ -95,27 +103,26 @@ Retrieve all wallets for a specific user.
 ```json
 {
   "success": true,
-  "data": {
-    "data": [
-      {
-        "id": "wallet-uuid",
-        "user_id": "user-uuid",
-        "name": "My Checking Account",
-        "type": "checking",
-        "currency": "USD",
-        "balance": {
-          "amount": 150000,        // Amount in cents (1500.00)
-          "currency": "USD"
-        },
-        "created_at": "2024-01-01T12:00:00Z",
-        "updated_at": "2024-01-01T12:00:00Z",
-        "is_fully_loaded": false
-      }
-    ],
-    "count": 1
-  }
+  "data": [
+    {
+      "id": "wallet-uuid",
+      "user_id": "user-uuid",
+      "name": "My Checking Account",
+      "type": "BANK",
+      "currency": "USD",
+      "balance": {
+        "amount": 150000,        // Amount in cents (1500.00)
+        "currency": "USD"
+      },
+      "created_at": "2024-01-01T12:00:00Z",
+      "updated_at": "2024-01-01T12:00:00Z",
+      "is_fully_loaded": false
+    }
+  ]
 }
 ```
+
+**Note**: Response returns an array directly, not nested in a `data` object with count.
 
 **Frontend Example:**
 ```typescript
@@ -143,21 +150,19 @@ Retrieve detailed information about a specific wallet.
 {
   "success": true,
   "data": {
-    "data": {
-      "id": "wallet-uuid",
-      "user_id": "user-uuid",
-      "name": "My Checking Account",
-      "type": "checking",
-      "currency": "USD",
-      "balance": {
-        "amount": 150000,
-        "currency": "USD"
-      },
-      "created_at": "2024-01-01T12:00:00Z",
-      "updated_at": "2024-01-01T12:00:00Z",
-      "is_fully_loaded": true,
-      "transactions": []           // Only if includeTransactions=true
-    }
+    "id": "wallet-uuid",
+    "user_id": "user-uuid",
+    "name": "My Checking Account",
+    "type": "BANK",
+    "currency": "USD",
+    "balance": {
+      "amount": 150000,
+      "currency": "USD"
+    },
+    "created_at": "2024-01-01T12:00:00Z",
+    "updated_at": "2024-01-01T12:00:00Z",
+    "is_fully_loaded": true,
+    "transactions": []           // Only if includeTransactions=true
   }
 }
 ```
@@ -375,6 +380,108 @@ const addIncome = async (incomeData: {
 
 ## 🏷️ Category Management APIs
 
+### Get All Categories
+Retrieve all categories (both expense and income).
+
+**Endpoint:** `GET /api/v1/categories`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "expense-1",
+      "name": "餐飲",
+      "type": "expense"
+    },
+    {
+      "id": "income-1", 
+      "name": "薪資",
+      "type": "income"
+    }
+  ]
+}
+```
+
+**Frontend Example:**
+```typescript
+const getAllCategories = async () => {
+  const response = await fetch('/api/v1/categories');
+  return await response.json();
+};
+```
+
+---
+
+### Get Expense Categories
+Retrieve only expense categories.
+
+**Endpoint:** `GET /api/v1/categories/expense`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "expense-1",
+      "name": "餐飲", 
+      "type": "expense"
+    },
+    {
+      "id": "expense-2",
+      "name": "交通",
+      "type": "expense"
+    }
+  ]
+}
+```
+
+**Frontend Example:**
+```typescript
+const getExpenseCategories = async () => {
+  const response = await fetch('/api/v1/categories/expense');
+  return await response.json();
+};
+```
+
+---
+
+### Get Income Categories
+Retrieve only income categories.
+
+**Endpoint:** `GET /api/v1/categories/income`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "income-1",
+      "name": "薪資",
+      "type": "income"
+    },
+    {
+      "id": "income-2", 
+      "name": "投資",
+      "type": "income"
+    }
+  ]
+}
+```
+
+**Frontend Example:**
+```typescript
+const getIncomeCategories = async () => {
+  const response = await fetch('/api/v1/categories/income');
+  return await response.json();
+};
+```
+
+---
+
 ### Create Expense Category
 Create a new expense category.
 
@@ -453,6 +560,69 @@ const createIncomeCategory = async (categoryData: {
 
 ---
 
+### Get Incomes
+Retrieve income records with optional filtering.
+
+**Endpoint:** `GET /api/v1/incomes?userID={userID}`
+
+**Query Parameters:**
+- `userID` (required): User ID to fetch incomes for
+- `walletID` (optional): Filter by specific wallet
+- `categoryID` (optional): Filter by category
+- `startDate` (optional): Start date filter (YYYY-MM-DD format)
+- `endDate` (optional): End date filter (YYYY-MM-DD format)
+- `minAmount` (optional): Minimum amount filter (in smallest currency unit)
+- `maxAmount` (optional): Maximum amount filter (in smallest currency unit)
+- `description` (optional): Description search filter
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "income-uuid",
+      "wallet_id": "wallet-uuid",
+      "category_id": "category-uuid",
+      "amount": {
+        "amount": 500000,
+        "currency": "USD"
+      },
+      "description": "Salary",
+      "date": "2024-01-01T12:00:00Z",
+      "created_at": "2024-01-01T12:00:00Z",
+      "updated_at": "2024-01-01T12:00:00Z"
+    }
+  ],
+  "count": 1,
+  "message": "Incomes retrieved successfully"
+}
+```
+
+**Frontend Example:**
+```typescript
+const getIncomes = async (userID: string, filters?: {
+  walletID?: string;
+  categoryID?: string;
+  startDate?: string;
+  endDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  description?: string;
+}) => {
+  const params = new URLSearchParams({ userID });
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) params.append(key, value.toString());
+    });
+  }
+  const response = await fetch(`/api/v1/incomes?${params}`);
+  return await response.json();
+};
+```
+
+---
+
 ## 🔧 Utility APIs
 
 ### Health Check
@@ -481,13 +651,23 @@ const checkHealth = async () => {
 
 The following endpoints are planned but not yet implemented:
 
-### Category Collection Operations
-- `GET /api/v1/categories` - Get all categories with type filter
+### Advanced Category Operations
 - `POST /api/v1/categories` - Generic create category
 - `GET /api/v1/categories/{categoryID}` - Get category by ID
 - `PUT /api/v1/categories/{categoryID}` - Update category
 - `DELETE /api/v1/categories/{categoryID}` - Delete category
 - `GET /api/v1/categories/tree` - Get category tree structure
+
+### Advanced Transaction Operations
+- `GET /api/v1/expenses?userID={userID}` - Get expense records (similar to incomes)
+- `PUT /api/v1/expenses/{expenseID}` - Update expense
+- `DELETE /api/v1/expenses/{expenseID}` - Delete expense
+- `PUT /api/v1/incomes/{incomeID}` - Update income
+- `DELETE /api/v1/incomes/{incomeID}` - Delete income
+
+### Transfer Operations
+- `POST /api/v1/transfers` - Process wallet-to-wallet transfers
+- `GET /api/v1/transfers?userID={userID}` - Get transfer history
 
 ---
 
