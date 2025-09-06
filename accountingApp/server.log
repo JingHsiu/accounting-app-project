@@ -1,0 +1,18 @@
+🏦 Accounting App starting on port 8080
+📊 Available endpoints:
+  Wallet Management:
+    GET  /api/v1/wallets?userID={id}          - List user wallets
+    POST /api/v1/wallets                     - Create wallet
+    GET  /api/v1/wallets/{id}                - Get wallet details
+    PUT  /api/v1/wallets/{id}                - Update wallet
+    DELETE /api/v1/wallets/{id}              - Delete wallet
+    GET  /api/v1/wallets/{id}/balance        - Get wallet balance
+  Category Management:
+    GET  /api/v1/categories                  - Get all categories
+    GET  /api/v1/categories/expense          - Get expense categories
+    GET  /api/v1/categories/income           - Get income categories
+  Transaction Management:
+    POST /api/v1/expenses                    - Add expense
+    POST /api/v1/incomes                     - Add income
+2025/09/05 11:42:43 listen tcp :8080: bind: address already in use
+exit status 1
