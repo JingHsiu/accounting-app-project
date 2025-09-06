@@ -16,11 +16,13 @@ type Router struct {
 	getWalletBalanceController *controller.GetWalletBalanceController
 
 	// Specialized transaction controllers
-	addExpenseController *controller.AddExpenseController
-	addIncomeController  *controller.AddIncomeController
+	addExpenseController   *controller.AddExpenseController
+	addIncomeController    *controller.AddIncomeController
+	queryIncomeController  *controller.QueryIncomeController
 
 	// Category controllers
-	categoryController *controller.CategoryController
+	categoryController    *controller.CategoryController
+	getCategoriesController *controller.GetCategoriesController
 }
 
 func NewRouter(
@@ -31,7 +33,9 @@ func NewRouter(
 	getWalletBalanceController *controller.GetWalletBalanceController,
 	addExpenseController *controller.AddExpenseController,
 	addIncomeController *controller.AddIncomeController,
+	queryIncomeController *controller.QueryIncomeController,
 	categoryController *controller.CategoryController,
+	getCategoriesController *controller.GetCategoriesController,
 ) *Router {
 	return &Router{
 		createWalletController:     createWalletController,
@@ -41,7 +45,9 @@ func NewRouter(
 		getWalletBalanceController: getWalletBalanceController,
 		addExpenseController:       addExpenseController,
 		addIncomeController:        addIncomeController,
+		queryIncomeController:      queryIncomeController,
 		categoryController:         categoryController,
+		getCategoriesController:    getCategoriesController,
 	}
 }
 
@@ -60,15 +66,13 @@ func (r *Router) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/v1/wallets/balance/", r.getWalletBalanceController.GetWalletBalance) // Specialized balance endpoint
 
 	// Category endpoints
-	mux.HandleFunc("/api/v1/categories", r.handleCategoryCollection)                   // GET (with type param), POST
-	mux.HandleFunc("/api/v1/categories/", r.handleCategoryResource)                   // GET, PUT, DELETE by ID
-	mux.HandleFunc("/api/v1/categories/tree", r.handleCategoryTree)                   // GET category tree
-	mux.HandleFunc("/api/v1/categories/expense", r.categoryController.CreateExpenseCategory) // Legacy endpoint
-	mux.HandleFunc("/api/v1/categories/income", r.categoryController.CreateIncomeCategory)   // Legacy endpoint
+	mux.HandleFunc("/api/v1/categories", r.getCategoriesController.GetCategories)              // GET all categories
+	mux.HandleFunc("/api/v1/categories/expense", r.getCategoriesController.GetExpenseCategories) // GET expense categories
+	mux.HandleFunc("/api/v1/categories/income", r.getCategoriesController.GetIncomeCategories)   // GET income categories
 
 	// Transaction endpoints
 	mux.HandleFunc("/api/v1/expenses", r.addExpenseController.AddExpense)
-	mux.HandleFunc("/api/v1/incomes", r.addIncomeController.AddIncome)
+	mux.HandleFunc("/api/v1/incomes", r.handleIncomes)
 
 	return mux
 }
@@ -106,44 +110,15 @@ func (r *Router) handleWalletResource(w http.ResponseWriter, req *http.Request) 
 	}
 }
 
-// handleCategoryCollection routes requests to /api/v1/categories
-func (r *Router) handleCategoryCollection(w http.ResponseWriter, req *http.Request) {
+// handleIncomes routes requests to /api/v1/incomes
+func (r *Router) handleIncomes(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case http.MethodGet:
-		// TODO: Implement get all categories with optional type filter
-		http.Error(w, "Get categories endpoint not implemented", http.StatusNotImplemented)
+		r.queryIncomeController.GetIncomes(w, req)
 	case http.MethodPost:
-		// TODO: Implement generic create category
-		http.Error(w, "Create category endpoint not implemented", http.StatusNotImplemented)
+		r.addIncomeController.AddIncome(w, req)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-// handleCategoryResource routes requests to /api/v1/categories/{categoryID}
-func (r *Router) handleCategoryResource(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case http.MethodGet:
-		// TODO: Implement get category by ID
-		http.Error(w, "Get category by ID endpoint not implemented", http.StatusNotImplemented)
-	case http.MethodPut:
-		// TODO: Implement update category
-		http.Error(w, "Update category endpoint not implemented", http.StatusNotImplemented)
-	case http.MethodDelete:
-		// TODO: Implement delete category
-		http.Error(w, "Delete category endpoint not implemented", http.StatusNotImplemented)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-// handleCategoryTree routes requests to /api/v1/categories/tree
-func (r *Router) handleCategoryTree(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case http.MethodGet:
-		// TODO: Implement get category tree
-		http.Error(w, "Get category tree endpoint not implemented", http.StatusNotImplemented)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}

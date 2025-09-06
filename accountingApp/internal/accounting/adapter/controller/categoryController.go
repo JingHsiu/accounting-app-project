@@ -11,16 +11,22 @@ import (
 type CategoryController struct {
 	createExpenseCategoryUseCase usecase.CreateExpenseCategoryUseCase
 	createIncomeCategoryUseCase  usecase.CreateIncomeCategoryUseCase
+	getExpenseCategoriesUseCase  usecase.GetExpenseCategoriesUseCase
+	getIncomeCategoriesUseCase   usecase.GetIncomeCategoriesUseCase
 }
 
 // NewCategoryController creates a new CategoryController
 func NewCategoryController(
 	createExpenseCategoryUseCase usecase.CreateExpenseCategoryUseCase,
 	createIncomeCategoryUseCase usecase.CreateIncomeCategoryUseCase,
+	getExpenseCategoriesUseCase usecase.GetExpenseCategoriesUseCase,
+	getIncomeCategoriesUseCase usecase.GetIncomeCategoriesUseCase,
 ) *CategoryController {
 	return &CategoryController{
 		createExpenseCategoryUseCase: createExpenseCategoryUseCase,
 		createIncomeCategoryUseCase:  createIncomeCategoryUseCase,
+		getExpenseCategoriesUseCase:  getExpenseCategoriesUseCase,
+		getIncomeCategoriesUseCase:   getIncomeCategoriesUseCase,
 	}
 }
 
@@ -114,6 +120,90 @@ func (c *CategoryController) CreateIncomeCategory(w http.ResponseWriter, r *http
 		"success": output.GetExitCode() == 0,
 		"message": output.GetMessage(),
 	})
+}
+
+// GetExpenseCategories handles GET /api/v1/categories/expense
+func (c *CategoryController) GetExpenseCategories(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := r.URL.Query().Get("userID")
+	if userID == "" {
+		c.sendError(w, "userID is required", http.StatusBadRequest)
+		return
+	}
+
+	input := usecase.GetExpenseCategoriesInput{
+		UserID: userID,
+	}
+
+	output := c.getExpenseCategoriesUseCase.Execute(input)
+
+	w.Header().Set("Content-Type", "application/json")
+	if output.GetExitCode() != 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// Convert to expected frontend format
+	if categoryOutput, ok := output.(usecase.GetExpenseCategoriesOutput); ok {
+		response := map[string]interface{}{
+			"success": output.GetExitCode() == 0,
+			"message": output.GetMessage(),
+		}
+		if output.GetExitCode() == 0 {
+			response["data"] = categoryOutput.Categories
+		}
+		json.NewEncoder(w).Encode(response)
+	} else {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": output.GetExitCode() == 0,
+			"message": output.GetMessage(),
+		})
+	}
+}
+
+// GetIncomeCategories handles GET /api/v1/categories/income
+func (c *CategoryController) GetIncomeCategories(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := r.URL.Query().Get("userID")
+	if userID == "" {
+		c.sendError(w, "userID is required", http.StatusBadRequest)
+		return
+	}
+
+	input := usecase.GetIncomeCategoriesInput{
+		UserID: userID,
+	}
+
+	output := c.getIncomeCategoriesUseCase.Execute(input)
+
+	w.Header().Set("Content-Type", "application/json")
+	if output.GetExitCode() != 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// Convert to expected frontend format
+	if categoryOutput, ok := output.(usecase.GetIncomeCategoriesOutput); ok {
+		response := map[string]interface{}{
+			"success": output.GetExitCode() == 0,
+			"message": output.GetMessage(),
+		}
+		if output.GetExitCode() == 0 {
+			response["data"] = categoryOutput.Categories
+		}
+		json.NewEncoder(w).Encode(response)
+	} else {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": output.GetExitCode() == 0,
+			"message": output.GetMessage(),
+		})
+	}
 }
 
 // Helper methods

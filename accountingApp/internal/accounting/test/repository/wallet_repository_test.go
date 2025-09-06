@@ -25,7 +25,7 @@ func NewMockWalletRepositoryPeer() *MockWalletRepositoryPeer {
 	}
 }
 
-func (m *MockWalletRepositoryPeer) SaveData(data mapper.WalletData) error {
+func (m *MockWalletRepositoryPeer) Save(data mapper.WalletData) error {
 	if m.saveFunc != nil {
 		return m.saveFunc(data)
 	}
@@ -50,7 +50,7 @@ func (m *MockWalletRepositoryPeer) SaveData(data mapper.WalletData) error {
 	return nil
 }
 
-func (m *MockWalletRepositoryPeer) FindDataByID(id string) (*mapper.WalletData, error) {
+func (m *MockWalletRepositoryPeer) FindByID(id string) (*mapper.WalletData, error) {
 	if m.findFunc != nil {
 		return m.findFunc(id)
 	}
@@ -61,14 +61,14 @@ func (m *MockWalletRepositoryPeer) FindDataByID(id string) (*mapper.WalletData, 
 	return nil, nil
 }
 
-func (m *MockWalletRepositoryPeer) FindDataByUserID(userID string) ([]mapper.WalletData, error) {
+func (m *MockWalletRepositoryPeer) FindByUserID(userID string) ([]mapper.WalletData, error) {
 	if wallets, exists := m.userData[userID]; exists {
 		return wallets, nil
 	}
 	return []mapper.WalletData{}, nil
 }
 
-func (m *MockWalletRepositoryPeer) DeleteData(id string) error {
+func (m *MockWalletRepositoryPeer) Delete(id string) error {
 	if m.deleteFunc != nil {
 		return m.deleteFunc(id)
 	}

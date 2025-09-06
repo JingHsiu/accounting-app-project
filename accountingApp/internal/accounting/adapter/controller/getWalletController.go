@@ -60,10 +60,7 @@ func (c *QueryWalletController) GetWallets(w http.ResponseWriter, r *http.Reques
 		response[i] = c.walletToResponse(wallet)
 	}
 
-	c.sendSuccess(w, map[string]interface{}{
-		"data":  response,
-		"count": len(response),
-	})
+	c.sendSuccess(w, response)
 }
 
 // GetWallet handles GET /api/v1/wallets/{walletID}
@@ -104,9 +101,7 @@ func (c *QueryWalletController) GetWallet(w http.ResponseWriter, r *http.Request
 	}
 
 	response := c.walletToResponse(output.Wallet)
-	c.sendSuccess(w, map[string]interface{}{
-		"data": response,
-	})
+	c.sendSuccess(w, response)
 }
 
 // Helper methods

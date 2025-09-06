@@ -72,6 +72,25 @@ type GetWalletsInput struct {
 	UserID string
 }
 
+type GetExpenseCategoriesInput struct {
+	UserID string
+}
+
+type GetIncomeCategoriesInput struct {
+	UserID string
+}
+
+type GetIncomesInput struct {
+	UserID       string
+	WalletID     *string // Optional filter
+	CategoryID   *string // Optional filter
+	StartDate    *time.Time // Optional date range filter
+	EndDate      *time.Time // Optional date range filter
+	MinAmount    *int64  // Optional amount range filter (in cents)
+	MaxAmount    *int64  // Optional amount range filter (in cents)
+	Description  *string // Optional description search filter
+}
+
 // Query Outputs (specialized outputs for queries that return data)
 type GetWalletOutput struct {
 	ID       string          `json:"id"`
@@ -106,6 +125,69 @@ type GetWalletsOutput struct {
 func (o GetWalletsOutput) GetID() string                { return o.ID }
 func (o GetWalletsOutput) GetExitCode() common.ExitCode { return o.ExitCode }
 func (o GetWalletsOutput) GetMessage() string           { return o.Message }
+
+// Category structure for API responses
+type CategoryData struct {
+	ID            string                   `json:"id"`
+	Name          string                   `json:"name"`
+	Type          string                   `json:"type"` // "expense" or "income"
+	CreatedAt     string                   `json:"created_at"`
+	UpdatedAt     string                   `json:"updated_at"`
+	Subcategories []SubcategoryData        `json:"subcategories,omitempty"`
+}
+
+type SubcategoryData struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// Income record structure for API responses
+type IncomeRecordData struct {
+	ID            string `json:"id"`
+	WalletID      string `json:"wallet_id"`
+	SubcategoryID string `json:"subcategory_id"`
+	Amount        struct {
+		Amount   int64  `json:"amount"`   // Amount in cents
+		Currency string `json:"currency"`
+	} `json:"amount"`
+	Description string `json:"description"`
+	Date        string `json:"date"`        // ISO format
+	CreatedAt   string `json:"created_at"`  // ISO format
+}
+
+type GetExpenseCategoriesOutput struct {
+	ID         string          `json:"id"`
+	ExitCode   common.ExitCode `json:"exit_code"`
+	Message    string          `json:"message"`
+	Categories []CategoryData  `json:"categories,omitempty"`
+}
+
+func (o GetExpenseCategoriesOutput) GetID() string                { return o.ID }
+func (o GetExpenseCategoriesOutput) GetExitCode() common.ExitCode { return o.ExitCode }
+func (o GetExpenseCategoriesOutput) GetMessage() string           { return o.Message }
+
+type GetIncomeCategoriesOutput struct {
+	ID         string          `json:"id"`
+	ExitCode   common.ExitCode `json:"exit_code"`
+	Message    string          `json:"message"`
+	Categories []CategoryData  `json:"categories,omitempty"`
+}
+
+func (o GetIncomeCategoriesOutput) GetID() string                { return o.ID }
+func (o GetIncomeCategoriesOutput) GetExitCode() common.ExitCode { return o.ExitCode }
+func (o GetIncomeCategoriesOutput) GetMessage() string           { return o.Message }
+
+type GetIncomesOutput struct {
+	ID      string             `json:"id"`
+	ExitCode common.ExitCode   `json:"exit_code"`
+	Message string            `json:"message"`
+	Data    []IncomeRecordData `json:"data,omitempty"`
+	Count   int               `json:"count"`
+}
+
+func (o GetIncomesOutput) GetID() string                { return o.ID }
+func (o GetIncomesOutput) GetExitCode() common.ExitCode { return o.ExitCode }
+func (o GetIncomesOutput) GetMessage() string           { return o.Message }
 
 // =============================================================================
 // USE CASE INTERFACES
@@ -163,4 +245,19 @@ type GetWalletsUseCase interface {
 // GetWalletUseCase defines the interface for querying a single wallet
 type GetWalletUseCase interface {
 	Execute(input GetWalletInput) common.Output
+}
+
+// GetExpenseCategoriesUseCase defines the interface for querying user's expense categories
+type GetExpenseCategoriesUseCase interface {
+	Execute(input GetExpenseCategoriesInput) common.Output
+}
+
+// GetIncomeCategoriesUseCase defines the interface for querying user's income categories
+type GetIncomeCategoriesUseCase interface {
+	Execute(input GetIncomeCategoriesInput) common.Output
+}
+
+// GetIncomesUseCase defines the interface for querying income records
+type GetIncomesUseCase interface {
+	Execute(input GetIncomesInput) common.Output
 }
