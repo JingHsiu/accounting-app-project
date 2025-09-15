@@ -24,17 +24,13 @@ const ApiTester: React.FC = () => {
       const wallets = await walletService.getWallets(DEMO_USER_ID, 'ApiTester')
       addResult(`✅ Wallets loaded: ${wallets.length} found`)
 
-      // Test categories endpoint (expected to return 501)
+      // Test categories endpoint
       addResult('📁 Testing categories endpoint...')
       try {
         const categories = await categoryService.getCategories()
-        if (categories.success) {
-          addResult(`✅ Categories loaded: ${categories.data?.length || 0} found`)
-        } else {
-          addResult(`⚠️ Categories failed: ${categories.error}`)
-        }
+        addResult(`✅ Categories loaded: ${categories.length} found`)
       } catch (error: any) {
-        addResult(`❌ Categories error (expected 501): ${error.message}`)
+        addResult(`❌ Categories error: ${error.message}`)
       }
 
       addResult('🎯 Check console for detailed API debugging logs')

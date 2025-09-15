@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useQuery } from 'react-query'
 import { 
   TrendingUp, 
@@ -9,14 +9,24 @@ import {
   ArrowDownRight
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui'
-import { dashboardService, walletService } from '@/services'
+import { walletService, categoryService } from '@/services'
 import { formatMoney } from '@/utils/format'
+import { useCreateExpense, useCreateIncome, useExpenses, useIncomes } from '@/hooks'
 import WalletDebugPanel from '@/components/WalletDebugPanel'
+import { EnhancedTransactionModal } from '@/components/EnhancedTransactionModal'
+import { EnhancedTransactionList } from '@/components/EnhancedTransactionItem'
+import { CategoryType } from '@/types'
 
 // Mock user ID for demo purposes
 const DEMO_USER_ID = "demo-user-123"
 
+// Modal types for better type safety
+type ModalType = 'expense' | 'income' | null
+
 const Dashboard: React.FC = () => {
+  // Modal state management
+  const [activeModal, setActiveModal] = useState<ModalType>(null)
+
   // Queries - Dashboard API not implemented yet, so disable for now
   // const { data: dashboardData, isLoading: dashboardLoading } = useQuery(
   //   ['dashboard', DEMO_USER_ID],
@@ -47,14 +57,106 @@ const Dashboard: React.FC = () => {
     }
   )
 
+  // Fetch recent transactions for dashboard display
+  const { data: recentExpenses = [] } = useExpenses(
+    { walletID: undefined }, // Get all expenses for recent view
+    { enabled: true }
+  )
+
+  const { data: recentIncomes = [] } = useIncomes(
+    { walletID: undefined }, // Get all incomes for recent view  
+    { enabled: true }
+  )
+
+  // Fetch categories for both display and form dropdowns
+  const { data: expenseCategories = [] } = useQuery(
+    ['categories', 'expense'],
+    () => categoryService.getCategories(CategoryType.EXPENSE),
+    { enabled: true } // Always load categories for transaction display
+  )
+
+  const { data: incomeCategories = [] } = useQuery(
+    ['categories', 'income'],
+    () => categoryService.getCategories(CategoryType.INCOME),
+    { enabled: true } // Always load categories for transaction display
+  )
+
+  // Mutation hooks for creating transactions
+  const createExpenseMutation = useCreateExpense({
+    onSuccess: () => {
+      console.log('✅ Expense created successfully')
+      setActiveModal(null)
+    },
+    onError: (error) => {
+      console.error('❌ Failed to create expense:', error)
+    }
+  })
+
+  const createIncomeMutation = useCreateIncome({
+    onSuccess: () => {
+      console.log('✅ Income created successfully')
+      setActiveModal(null)
+    },
+    onError: (error) => {
+      console.error('❌ Failed to create income:', error)
+    }
+  })
+
   // TODO: Implement monthly stats visualization
   // const { data: monthlyStats } = useQuery(
   //   ['monthlyStats', DEMO_USER_ID],
   //   () => dashboardService.getMonthlyStats(DEMO_USER_ID, 6)
   // )
 
-  const dashboard = dashboardData?.data
+  const dashboard = dashboardData
   const wallets = Array.isArray(walletsData) ? walletsData : []
+
+  // Modal handling functions
+  const handleOpenModal = (type: ModalType) => {
+    if (wallets.length === 0) {
+      console.warn('No wallets available for transaction creation')
+      return
+    }
+    setActiveModal(type)
+  }
+
+  const handleCloseModal = () => {
+    setActiveModal(null)
+  }
+
+  // Enhanced modal submit handler
+  const handleTransactionSubmit = (data: {
+    wallet_id: string;
+    subcategory_id: string;
+    amount: number;
+    currency: string;
+    description?: string;
+    date: string;
+  }) => {
+    if (activeModal === 'expense') {
+      createExpenseMutation.mutate(data)
+    } else if (activeModal === 'income') {
+      createIncomeMutation.mutate(data)
+    }
+  }
+
+  // Combine and sort recent transactions for display
+  const recentTransactions = [
+    ...recentExpenses.slice(0, 3).map(expense => ({
+      ...expense,
+      type: 'expense' as const,
+      displayAmount: expense.amount,
+      icon: ArrowDownRight,
+      colorClass: 'text-red-600 bg-red-100'
+    })),
+    ...recentIncomes.slice(0, 3).map(income => ({
+      ...income,
+      type: 'income' as const,
+      displayAmount: income.amount,
+      icon: ArrowUpRight,
+      colorClass: 'text-green-600 bg-green-100'
+    }))
+  ].sort((a, b) => new Date(b.date || b.createdAt).getTime() - new Date(a.date || a.createdAt).getTime()).slice(0, 5)
   
   // Enhanced debugging for Dashboard
   console.group('🏠 [Dashboard] Component Render Debug')
@@ -243,21 +345,31 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <Button variant="primary" className="w-full justify-start">
+                <Button 
+                  variant="primary" 
+                  className="w-full justify-start"
+                  onClick={() => handleOpenModal('expense')}
+                  disabled={wallets.length === 0}
+                >
                   <Plus className="w-4 h-4" />
                   新增支出
                 </Button>
-                <Button variant="secondary" className="w-full justify-start">
+                <Button 
+                  variant="secondary" 
+                  className="w-full justify-start"
+                  onClick={() => handleOpenModal('income')}
+                  disabled={wallets.length === 0}
+                >
                   <Plus className="w-4 h-4" />
                   新增收入
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" disabled>
                   <TrendingUp className="w-4 h-4" />
-                  轉帳
+                  轉帳 (即將推出)
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
+                <Button variant="ghost" className="w-full justify-start" disabled>
                   <Wallet className="w-4 h-4" />
-                  新增錢包
+                  新增錢包 (即將推出)
                 </Button>
               </div>
             </CardContent>
@@ -274,54 +386,27 @@ const Dashboard: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {dashboard?.recentTransactions?.length ? (
-            <div className="space-y-3">
-              {dashboard.recentTransactions.slice(0, 5).map((transaction: any, index) => (
-                <div key={index} className="flex items-center justify-between p-3 hover:bg-primary-50/50 rounded-lg transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      'amount' in transaction && transaction.amount.amount > 0 
-                        ? 'bg-secondary-100 text-secondary-600' 
-                        : 'bg-accent-100 text-accent-600'
-                    }`}>
-                      {'amount' in transaction && transaction.amount.amount > 0 
-                        ? <ArrowUpRight className="w-4 h-4" />
-                        : <ArrowDownRight className="w-4 h-4" />
-                    }
-                    </div>
-                    <div>
-                      <p className="font-medium text-neutral-800">
-                        {transaction.description || '交易記錄'}
-                      </p>
-                      <p className="text-sm text-neutral-500">
-                        {new Date(transaction.date || transaction.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`font-semibold ${
-                    'amount' in transaction && transaction.amount.amount > 0 
-                      ? 'text-secondary-600' 
-                      : 'text-accent-600'
-                  }`}>
-                    {'amount' in transaction 
-                      ? formatMoney(transaction.amount)
-                      : 'NT$ 0'
-                    }
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <TrendingUp className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
-              <p className="text-neutral-500">尚無交易記錄</p>
-            </div>
-          )}
+          <EnhancedTransactionList
+            transactions={recentTransactions}
+            wallets={wallets}
+            categories={[...expenseCategories, ...incomeCategories]}
+            className="space-y-3"
+          />
         </CardContent>
       </Card>
       
       {/* Debug Panel */}
       <WalletDebugPanel userID={DEMO_USER_ID} show={false} />
+      
+      {/* Enhanced Transaction Creation Modal */}
+      <EnhancedTransactionModal
+        open={!!activeModal}
+        onOpenChange={handleCloseModal}
+        onSubmit={handleTransactionSubmit}
+        wallets={wallets}
+        categories={activeModal === 'expense' ? expenseCategories : incomeCategories}
+        type={activeModal || 'expense'}
+      />
     </div>
   )
 }

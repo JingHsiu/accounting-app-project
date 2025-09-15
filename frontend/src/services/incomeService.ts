@@ -1,77 +1,36 @@
 import { apiRequest } from './api'
+import { incomeTransformer, toBackendFormatWithMapping } from '@/utils/apiTransform'
 import type { IncomeRecord, CreateIncomeRequest, UpdateIncomeRequest, IncomeExpenseFilters, ApiResponse } from '@/types'
 
 export const incomeService = {
-  // Get all income records with optional filtering
+  // Get all income records with optional filtering  
   getIncomes: async (filters?: IncomeExpenseFilters, component = 'IncomeService'): Promise<IncomeRecord[]> => {
     console.group(`🔍 [${component}] Getting income records`)
     
     try {
-      // Build query parameters
+      // Build query parameters (transform to backend format)
       const queryParams = new URLSearchParams()
-      if (filters?.walletID) queryParams.append('walletID', filters.walletID)
-      if (filters?.categoryID) queryParams.append('categoryID', filters.categoryID)
-      if (filters?.startDate) queryParams.append('startDate', filters.startDate)
-      if (filters?.endDate) queryParams.append('endDate', filters.endDate)
-      if (filters?.minAmount) queryParams.append('minAmount', filters.minAmount.toString())
-      if (filters?.maxAmount) queryParams.append('maxAmount', filters.maxAmount.toString())
+      if (filters?.walletID) queryParams.append('wallet_id', filters.walletID)
+      if (filters?.categoryID) queryParams.append('subcategory_id', filters.categoryID)
+      if (filters?.startDate) queryParams.append('start_date', filters.startDate)
+      if (filters?.endDate) queryParams.append('end_date', filters.endDate)
+      if (filters?.minAmount) queryParams.append('min_amount', filters.minAmount.toString())
+      if (filters?.maxAmount) queryParams.append('max_amount', filters.maxAmount.toString())
       if (filters?.description) queryParams.append('description', filters.description)
       
       const queryString = queryParams.toString()
       const url = queryString ? `/incomes?${queryString}` : '/incomes'
       
       console.log('📡 Making API request to:', url)
-      const response = await apiRequest.get<{data: IncomeRecord[], count: number}>(url)
+      const response = await apiRequest.get<{data: any[], count: number}>(url)
       
-      if (!response.success) {
-        console.error('❌ API Error:', response.error)
-        console.groupEnd()
-        throw new Error(response.error || 'Failed to load income records')
-      }
-
-      if (!response.data) {
-        console.error('❌ No data in response')
-        console.groupEnd()
-        throw new Error('No data received from server')
-      }
-
-      // Extract income array (handle different response formats)
-      let incomeArray: IncomeRecord[] = []
+      // Use shared transformer to handle response
+      const transformedIncomes = incomeTransformer.handleResponse(response) as IncomeRecord[]
       
-      if (Array.isArray(response.data)) {
-        // Direct array format
-        console.log('📊 Direct array format detected')
-        incomeArray = response.data
-      } else if (response.data && typeof response.data === 'object') {
-        // Expected format: {data: [...], count: number}
-        console.log('📊 Nested data structure:', {
-          hasDataArray: Array.isArray((response.data as any).data),
-          dataLength: (response.data as any).data?.length || 0,
-          count: (response.data as any).count
-        })
-        
-        if (Array.isArray((response.data as any).data)) {
-          incomeArray = (response.data as any).data
-        } else {
-          console.error('❌ Unrecognized data structure:', response.data)
-          console.groupEnd()
-          throw new Error('Invalid data structure: unable to extract income array')
-        }
-      } else {
-        console.error('❌ Invalid response data format:', typeof response.data)
-        console.groupEnd()
-        throw new Error('Invalid data structure: expected object or array')
-      }
-
-      if (!Array.isArray(incomeArray)) {
-        console.error('❌ Extracted data is not an array:', typeof incomeArray)
-        console.groupEnd()
-        throw new Error('Invalid data structure: expected array of income records')
-      }
-
-      console.log('✅ Returning income array:', incomeArray.length, 'records')
+      console.log('✅ Transformed', transformedIncomes.length, 'income records')
       console.groupEnd()
-      return incomeArray
+      
+      return transformedIncomes
       
     } catch (error) {
       console.error('💥 Exception in getIncomes:', error)
@@ -161,30 +120,42 @@ export const incomeService = {
       }
     }
 
-    // Handle different response formats defensively
-    let income: IncomeRecord | null = null
+    // Handle different response formats defensively with transformation
+    let incomeData: any = null
     
     if (response.data && typeof response.data === 'object') {
       // Check for double-wrapped format: {success: true, data: {data: income}}
       if ((response.data as any).data && typeof (response.data as any).data === 'object') {
-        income = (response.data as any).data
+        incomeData = (response.data as any).data
       } 
       // Check for direct income format: {success: true, data: income}
       else if ((response.data as any).id && (response.data as any).amount) {
-        income = response.data as IncomeRecord
+        incomeData = response.data
       }
     }
 
-    if (!income) {
+    if (!incomeData) {
       return {
         success: false,
         error: 'Invalid income data structure received'
       }
     }
 
+    // Transform API snake_case to frontend camelCase
+    const transformedIncome: IncomeRecord = {
+      id: incomeData.id,
+      walletID: incomeData.wallet_id || incomeData.walletID,
+      categoryID: incomeData.subcategory_id || incomeData.categoryID,
+      amount: incomeData.amount,
+      description: incomeData.description,
+      date: incomeData.date,
+      createdAt: incomeData.created_at || incomeData.createdAt,
+      updatedAt: incomeData.updated_at || incomeData.updatedAt
+    }
+
     return {
       success: true,
-      data: income
+      data: transformedIncome
     }
   },
 

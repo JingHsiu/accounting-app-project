@@ -6,7 +6,7 @@ import { walletService, categoryService } from '@/services'
 import { useCreateExpense, useUpdateExpense } from '@/hooks'
 import type { ExpenseRecord, CreateExpenseRequest, UpdateExpenseRequest } from '@/types'
 import { CategoryType } from '@/types'
-import { formatDate } from '@/utils/format'
+import { formatDate, convertToBackendAmount, convertFromBackendAmount } from '@/utils/format'
 
 interface ExpenseFormProps {
   userID: string
@@ -26,7 +26,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
   const [formData, setFormData] = useState({
     walletID: initialData?.walletID || '',
     categoryID: initialData?.categoryID || '',
-    amount: initialData?.amount?.amount || 0,
+    amount: initialData?.amount?.amount 
+      ? convertFromBackendAmount(initialData.amount.amount, initialData.amount.currency) 
+      : 0,
     currency: initialData?.amount?.currency || 'TWD',
     description: initialData?.description || '',
     date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
@@ -40,14 +42,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
     () => walletService.getWallets(userID, 'ExpenseForm')
   )
 
-  const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery(
-    'categories',
-    () => categoryService.getCategories()
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery(
+    'expense-categories',
+    () => categoryService.getCategories(CategoryType.EXPENSE)
   )
 
-  // Extract categories from API response and filter expense categories
-  const categories = categoriesResponse?.success ? categoriesResponse.data || [] : []
-  const expenseCategories = categories.filter((cat: any) => cat.type === CategoryType.EXPENSE)
+  // Categories are already filtered by type from the service
+  const expenseCategories = categories
 
   // Mutations
   const createExpense = useCreateExpense({
@@ -117,7 +118,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
       const updates: UpdateExpenseRequest = {
         walletID: formData.walletID,
         categoryID: formData.categoryID,
-        amount: formData.amount,
+        amount: convertToBackendAmount(formData.amount, formData.currency),
         currency: formData.currency,
         description: formData.description.trim(),
         date: new Date(formData.date).toISOString()
@@ -126,9 +127,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
       updateExpense.mutate({ expenseID: initialData.id, updates })
     } else {
       const expenseData: CreateExpenseRequest = {
-        walletID: formData.walletID,
-        categoryID: formData.categoryID,
-        amount: formData.amount,
+        wallet_id: formData.walletID,
+        subcategory_id: formData.categoryID,
+        amount: convertToBackendAmount(formData.amount, formData.currency),
         currency: formData.currency,
         description: formData.description.trim(),
         date: new Date(formData.date).toISOString()

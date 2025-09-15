@@ -1,5 +1,6 @@
 import { apiRequest } from './api'
-import type { Category, CategoryType, ApiResponse } from '@/types'
+import { CategoryType } from '@/types'
+import type { Category, ApiResponse } from '@/types'
 
 export interface CreateCategoryRequest {
   name: string
@@ -18,9 +19,36 @@ export interface UpdateCategoryRequest {
 
 export const categoryService = {
   // Get all categories
-  getCategories: async (type?: CategoryType): Promise<ApiResponse<Category[]>> => {
-    const url = type ? `/categories?type=${type}` : '/categories'
-    return apiRequest.get<Category[]>(url)
+  getCategories: async (type?: CategoryType, userID?: string): Promise<Category[]> => {
+    // Use demo user ID if not provided
+    const userId = userID || "demo-user-123"
+    
+    if (type === CategoryType.EXPENSE) {
+      const response = await apiRequest.get<{data: Category[]}>(`/categories/expense?userID=${userId}`)
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : response.data.data || []
+      }
+      throw new Error(response.error || 'Failed to load expense categories')
+    } else if (type === CategoryType.INCOME) {
+      const response = await apiRequest.get<{data: Category[]}>(`/categories/income?userID=${userId}`)
+      if (response.success && response.data) {
+        return Array.isArray(response.data) ? response.data : response.data.data || []
+      }
+      throw new Error(response.error || 'Failed to load income categories')
+    } else {
+      // Get both types and combine
+      const [expenseResponse, incomeResponse] = await Promise.all([
+        apiRequest.get<{data: Category[]}>(`/categories/expense?userID=${userId}`),
+        apiRequest.get<{data: Category[]}>(`/categories/income?userID=${userId}`)
+      ])
+      
+      const expenseCategories = expenseResponse.success && expenseResponse.data ? 
+        (Array.isArray(expenseResponse.data) ? expenseResponse.data : expenseResponse.data.data || []) : []
+      const incomeCategories = incomeResponse.success && incomeResponse.data ? 
+        (Array.isArray(incomeResponse.data) ? incomeResponse.data : incomeResponse.data.data || []) : []
+      
+      return [...expenseCategories, ...incomeCategories]
+    }
   },
 
   // Get category by ID

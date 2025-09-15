@@ -54,7 +54,7 @@ const Categories: React.FC = () => {
     }
   )
 
-  const categories = categoriesData?.data || []
+  const categories = categoriesData || []
 
   const resetForm = () => {
     setFormData({

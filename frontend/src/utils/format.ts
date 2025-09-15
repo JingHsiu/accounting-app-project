@@ -28,33 +28,49 @@ export const formatMoney = (money: Money): string => {
 }
 
 /**
- * Format date in various formats
+ * Format date in various formats with proper error handling
  */
-export const formatDate = (date: string | Date, format: 'short' | 'long' | 'time' = 'short'): string => {
+export const formatDate = (date: string | Date | undefined | null, format: 'short' | 'long' | 'time' = 'short'): string => {
+  // Handle null/undefined input
+  if (!date) {
+    return '無日期'
+  }
+  
   const d = typeof date === 'string' ? new Date(date) : date
   
-  if (format === 'time') {
-    return d.toLocaleTimeString('zh-TW', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  // Validate date object
+  if (!d || isNaN(d.getTime())) {
+    console.warn('⚠️ Invalid date passed to formatDate:', date)
+    return '無效日期'
   }
   
-  if (format === 'long') {
+  try {
+    if (format === 'time') {
+      return d.toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+    
+    if (format === 'long') {
+      return d.toLocaleDateString('zh-TW', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+      })
+    }
+    
+    // short format
     return d.toLocaleDateString('zh-TW', {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'long'
+      month: '2-digit',
+      day: '2-digit'
     })
+  } catch (error) {
+    console.error('❌ formatDate error:', error, 'Input:', date)
+    return '格式錯誤'
   }
-  
-  // short format
-  return d.toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
 }
 
 /**
@@ -97,7 +113,46 @@ export const formatRelativeTime = (date: string | Date): string => {
 }
 
 /**
- * Validate and parse money input
+ * Get currency subdivision (how many smaller units make up 1 major unit)
+ */
+export const getCurrencySubdivision = (currency: string): number => {
+  const currencySubdivisions: Record<string, number> = {
+    // Whole number currencies (no subdivision) - TWD as default
+    TWD: 1,     // 1 台幣 = 1 台幣 (no cents, base unit)
+    JPY: 1,     // 1 yen = 1 yen (no sen in practice)
+    KRW: 1,     // 1 won = 1 won (no subdivision)
+    VND: 1,     // 1 dong = 1 dong (no subdivision)
+    
+    // Decimal currencies (1 unit = 100 smaller units)
+    USD: 100,   // 1 dollar = 100 cents
+    EUR: 100,   // 1 euro = 100 cents
+    GBP: 100,   // 1 pound = 100 pence
+    CNY: 100,   // 1 yuan = 100 fen
+  }
+  
+  return currencySubdivisions[currency] || 1 // Default to 1 for unknown currencies (like TWD)
+}
+
+/**
+ * Convert display amount to backend storage format
+ * Handles currency-specific subdivisions correctly
+ */
+export const convertToBackendAmount = (displayAmount: number, currency: string): number => {
+  const subdivision = getCurrencySubdivision(currency)
+  return Math.round(displayAmount * subdivision)
+}
+
+/**
+ * Convert backend storage amount to display format
+ * Handles currency-specific subdivisions correctly  
+ */
+export const convertFromBackendAmount = (backendAmount: number, currency: string): number => {
+  const subdivision = getCurrencySubdivision(currency)
+  return backendAmount / subdivision
+}
+
+/**
+ * Validate and parse money input - defaults to TWD
  */
 export const parseMoney = (input: string, currency: string = 'TWD'): Money | null => {
   const cleanInput = input.replace(/[^\d.-]/g, '')
@@ -105,7 +160,10 @@ export const parseMoney = (input: string, currency: string = 'TWD'): Money | nul
   
   if (isNaN(amount)) return null
   
-  return { amount, currency }
+  // Convert display amount to storage format using TWD as base unit
+  const storageAmount = convertToBackendAmount(amount, currency)
+  
+  return { amount: storageAmount, currency }
 }
 
 /**

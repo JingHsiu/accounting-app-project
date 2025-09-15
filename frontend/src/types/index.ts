@@ -101,7 +101,7 @@ export interface CreateIncomeRequest {
   subcategory_id: string;
   amount: number;
   currency: string;
-  description: string;
+  description?: string;
   date: string;
 }
 
@@ -115,11 +115,11 @@ export interface UpdateIncomeRequest {
 }
 
 export interface CreateExpenseRequest {
-  walletID: string;
-  categoryID: string;
+  wallet_id: string;
+  subcategory_id: string;
   amount: number;
   currency: string;
-  description: string;
+  description?: string;
   date: string;
 }
 

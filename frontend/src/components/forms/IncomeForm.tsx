@@ -4,9 +4,9 @@ import { Button, Input, Select } from '@/components/ui'
 import { useQuery } from 'react-query'
 import { walletService, categoryService } from '@/services'
 import { useCreateIncome, useUpdateIncome } from '@/hooks'
-import type { IncomeRecord, CreateIncomeRequest, UpdateIncomeRequest } from '@/types'
+import type { IncomeRecord, UpdateIncomeRequest } from '@/types'
 import { CategoryType } from '@/types'
-import { formatDate } from '@/utils/format'
+import { formatDate, convertToBackendAmount, convertFromBackendAmount } from '@/utils/format'
 
 interface IncomeFormProps {
   userID: string
@@ -26,7 +26,9 @@ const IncomeForm: React.FC<IncomeFormProps> = ({
   const [formData, setFormData] = useState({
     walletID: initialData?.walletID || '',
     categoryID: initialData?.categoryID || '',
-    amount: initialData?.amount?.amount || 0,
+    amount: initialData?.amount?.amount 
+      ? convertFromBackendAmount(initialData.amount.amount, initialData.amount.currency) 
+      : 0,
     currency: initialData?.amount?.currency || 'TWD',
     description: initialData?.description || '',
     date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
@@ -40,16 +42,13 @@ const IncomeForm: React.FC<IncomeFormProps> = ({
     () => walletService.getWallets(userID, 'IncomeForm')
   )
 
-  const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery(
-    'categories',
-    () => categoryService.getCategories()
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery(
+    'income-categories',
+    () => categoryService.getCategories(CategoryType.INCOME)
   )
 
-  // Extract categories from API response and filter income categories
-  const categories = categoriesResponse?.success ? categoriesResponse.data || [] : []
-  const incomeCategories = categories.filter((cat: any) => 
-    cat.type === CategoryType.INCOME
-  )
+  // Categories are already filtered by type from the service
+  const incomeCategories = categories
 
   // Mutations
   const createIncome = useCreateIncome({
@@ -131,7 +130,7 @@ const IncomeForm: React.FC<IncomeFormProps> = ({
       const incomeData = {
         wallet_id: formData.walletID,
         subcategory_id: formData.categoryID,
-        amount: Math.round(formData.amount * 100), // Backend expects amount in cents, user enters dollars
+        amount: convertToBackendAmount(formData.amount, formData.currency), // Currency-aware conversion
         currency: formData.currency,
         description: formData.description.trim(),
         date: new Date(formData.date).toISOString()

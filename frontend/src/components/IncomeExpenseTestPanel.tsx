@@ -49,8 +49,8 @@ const IncomeExpenseTestPanel: React.FC = () => {
 
   const handleCreateTestIncome = () => {
     createIncome.mutate({
-      walletID: 'test-wallet-id',
-      categoryID: 'test-category-id',
+      wallet_id: 'test-wallet-id',
+      subcategory_id: 'test-category-id',
       amount: 1000,
       currency: 'TWD',
       description: '測試收入記錄',
@@ -60,8 +60,8 @@ const IncomeExpenseTestPanel: React.FC = () => {
 
   const handleCreateTestExpense = () => {
     createExpense.mutate({
-      walletID: 'test-wallet-id',
-      categoryID: 'test-category-id',
+      wallet_id: 'test-wallet-id',
+      subcategory_id: 'test-category-id',
       amount: 500,
       currency: 'TWD',
       description: '測試支出記錄',

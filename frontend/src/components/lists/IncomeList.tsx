@@ -42,14 +42,13 @@ const IncomeList: React.FC<IncomeListProps> = ({
     () => walletService.getWallets(userID, 'IncomeList')
   )
 
-  const { data: categoriesResponse } = useQuery(
-    'categories',
-    () => categoryService.getCategories()
+  const { data: categories = [] } = useQuery(
+    'income-categories',
+    () => categoryService.getCategories(CategoryType.INCOME)
   )
 
-  // Extract categories from API response and filter income categories
-  const categories = categoriesResponse?.success ? categoriesResponse.data || [] : []
-  const incomeCategories = categories.filter((cat: any) => cat.type === CategoryType.INCOME)
+  // Categories are already filtered by type from the service
+  const incomeCategories = categories
 
   // Delete mutation
   const deleteIncome = useDeleteIncome({

@@ -42,14 +42,13 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
     () => walletService.getWallets(userID, 'ExpenseList')
   )
 
-  const { data: categoriesResponse } = useQuery(
-    'categories',
-    () => categoryService.getCategories()
+  const { data: categories = [] } = useQuery(
+    'expense-categories',
+    () => categoryService.getCategories(CategoryType.EXPENSE)
   )
 
-  // Extract categories from API response and filter expense categories
-  const categories = categoriesResponse?.success ? categoriesResponse.data || [] : []
-  const expenseCategories = categories.filter((cat: any) => cat.type === CategoryType.EXPENSE)
+  // Categories are already filtered by type from the service
+  const expenseCategories = categories
 
   // Delete mutation
   const deleteExpense = useDeleteExpense({
