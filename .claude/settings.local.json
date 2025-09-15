@@ -32,7 +32,14 @@
       "Bash(kill:*)",
       "Bash(lsof:*)",
       "mcp__morphllm-fast-apply__read_multiple_files",
-      "Bash(DATABASE_URL=\"postgres://test:test@localhost:5432/test?sslmode=disable\" timeout 10s ./accountingApp)"
+      "Bash(DATABASE_URL=\"postgres://test:test@localhost:5432/test?sslmode=disable\" timeout 10s ./accountingApp)",
+      "Bash(docker exec:*)",
+      "mcp__playwright__browser_click",
+      "Bash(psql:*)",
+      "Bash(node:*)",
+      "mcp__magic__21st_magic_component_builder",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   },
@@ -40,5 +47,5 @@
     "type": "command",
     "command": ".claude/statusline.sh"
   },
-  "outputStyle": "default"
+  "outputStyle": "Explanatory"
 }
