@@ -8,8 +8,12 @@ import {
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui'
 import { IncomeList, ExpenseList } from '@/components/lists'
 import { IncomeForm, ExpenseForm } from '@/components/forms'
+import { EnhancedTransactionList } from '@/components/EnhancedTransactionItem'
 import { useIncomes, useExpenses } from '@/hooks'
+import { useQuery } from 'react-query'
+import { walletService, categoryService } from '@/services'
 import type { IncomeExpenseFilters } from '@/types'
+import { CategoryType } from '@/types'
 
 const DEMO_USER_ID = "demo-user-123"
 
@@ -33,6 +37,30 @@ const Transactions: React.FC = () => {
   } = useExpenses(globalFilters, {
     enabled: activeTab === 'combined' || activeTab === 'expense'
   })
+
+  // Fetch wallets and categories for enhanced display
+  const { data: walletsData } = useQuery(
+    ['wallets', DEMO_USER_ID],
+    () => walletService.getWallets(DEMO_USER_ID, 'Transactions'),
+    {
+      onError: (error) => {
+        console.error('❌ Failed to load wallets:', error)
+      }
+    }
+  )
+
+  const { data: expenseCategories = [] } = useQuery(
+    ['categories', 'expense'],
+    () => categoryService.getCategories(CategoryType.EXPENSE)
+  )
+
+  const { data: incomeCategories = [] } = useQuery(
+    ['categories', 'income'],
+    () => categoryService.getCategories(CategoryType.INCOME)
+  )
+
+  const wallets = Array.isArray(walletsData) ? walletsData : []
+  const categories = [...expenseCategories, ...incomeCategories]
 
   const isLoading = incomesLoading || expensesLoading
 
@@ -152,39 +180,12 @@ const Transactions: React.FC = () => {
                 ))}
               </div>
             ) : allTransactions.length > 0 ? (
-              <div className="space-y-4">
-                {allTransactions.map((transaction) => {
-                  const TransactionIcon = transaction.type === 'income' ? TrendingUp : TrendingDown
-                  const colorClass = transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                  const bgColorClass = transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
-                  
-                  return (
-                    <Card key={`${transaction.type}-${transaction.id}`} className="card-hover">
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-xl ${bgColorClass} ${colorClass}`}>
-                              <TransactionIcon className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium text-neutral-800">
-                                {transaction.description}
-                              </h3>
-                              <p className="text-sm text-neutral-500 mt-1">
-                                {new Date(transaction.date).toLocaleDateString('zh-TW')}
-                              </p>
-                            </div>
-                          </div>
-                          <div className={`text-2xl font-bold ${colorClass}`}>
-                            {transaction.type === 'income' ? '+' : '-'}
-                            {transaction.amount.currency} {transaction.amount.amount.toLocaleString()}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
+              <EnhancedTransactionList
+                transactions={allTransactions}
+                wallets={wallets}
+                categories={categories}
+                className="space-y-4"
+              />
             ) : (
               <div className="text-center py-12">
                 <Receipt className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
@@ -218,7 +219,7 @@ const Transactions: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-neutral-800">新增收入</h2>
                 <Button
-                  variant="ghost"
+                  variant="primary"
                   size="sm"
                   onClick={() => setShowIncomeForm(false)}
                   className="text-neutral-500 hover:text-neutral-700"
@@ -245,7 +246,7 @@ const Transactions: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-neutral-800">新增支出</h2>
                 <Button
-                  variant="ghost"
+                  variant="primary"
                   size="sm"
                   onClick={() => setShowExpenseForm(false)}
                   className="text-neutral-500 hover:text-neutral-700"

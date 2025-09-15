@@ -9,14 +9,12 @@ import (
 )
 
 type AddExpenseService struct {
-	walletRepo   repository.WalletRepository
-	categoryRepo repository.ExpenseCategoryRepository
+	walletRepo repository.WalletRepository
 }
 
-func NewAddExpenseService(walletRepo repository.WalletRepository, categoryRepo repository.ExpenseCategoryRepository) *AddExpenseService {
+func NewAddExpenseService(walletRepo repository.WalletRepository) *AddExpenseService {
 	return &AddExpenseService{
-		walletRepo:   walletRepo,
-		categoryRepo: categoryRepo,
+		walletRepo: walletRepo,
 	}
 }
 
@@ -30,32 +28,7 @@ func (s *AddExpenseService) Execute(input usecase.AddExpenseInput) common.Output
 		}
 	}
 
-	// 2. 驗證分類存在 (透過Repository而非Inquiry)
-	category, err := s.categoryRepo.FindBySubcategoryID(input.SubcategoryID)
-	if err != nil {
-		return common.UseCaseOutput{
-			ExitCode: common.Failure,
-			Message:  fmt.Sprintf("category not found: %v", err),
-		}
-	}
-	
-	if category == nil {
-		return common.UseCaseOutput{
-			ExitCode: common.Failure,
-			Message:  "Subcategory not found in any category",
-		}
-	}
-
-	// 透過聚合根驗證子分類存在性
-	err = category.ValidateSubcategoryExists(input.SubcategoryID)
-	if err != nil {
-		return common.UseCaseOutput{
-			ExitCode: common.Failure,
-			Message:  fmt.Sprintf("invalid subcategory: %v", err),
-		}
-	}
-	
-	// 3. 建立金額物件
+	// 2. 建立金額物件
 	amount, err := model.NewMoney(input.Amount, input.Currency)
 	if err != nil {
 		return common.UseCaseOutput{
@@ -64,7 +37,7 @@ func (s *AddExpenseService) Execute(input usecase.AddExpenseInput) common.Output
 		}
 	}
 
-	// 4. 透過Domain Model執行業務邏輯
+	// 3. 透過Domain Model執行業務邏輯
 	expense, err := wallet.AddExpense(*amount, input.SubcategoryID, input.Description, input.Date)
 	if err != nil {
 		return common.UseCaseOutput{
@@ -73,7 +46,7 @@ func (s *AddExpenseService) Execute(input usecase.AddExpenseInput) common.Output
 		}
 	}
 
-	// 5. 儲存完整聚合 (包含新的交易記錄)
+	// 4. 儲存完整聚合 (包含新的交易記錄)
 	if err := s.walletRepo.Save(wallet); err != nil {
 		return common.UseCaseOutput{
 			ExitCode: common.Failure,
