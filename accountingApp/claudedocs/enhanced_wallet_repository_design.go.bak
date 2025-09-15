@@ -1,0 +1,284 @@
+// Enhanced Wallet Repository Design
+// This document shows the proposed architecture changes for proper DDD aggregate persistence
+
+package design
+
+import (
+	"time"
+	"github.com/JingHsiu/accountingApp/internal/accounting/domain/model"
+	"github.com/JingHsiu/accountingApp/internal/accounting/application/mapper"
+)
+
+// ===== ENHANCED INTERFACES =====
+
+// WalletRepositoryPeer - Enhanced to handle aggregate + child entities
+type EnhancedWalletRepositoryPeer interface {
+	// Aggregate persistence - handles wallet + all child entities in single transaction
+	SaveAggregate(walletData mapper.WalletData, childEntities ChildEntitiesData) error
+	
+	// Aggregate loading - loads wallet + all child entities
+	FindAggregateByID(id string) (*mapper.WalletData, *ChildEntitiesData, error)
+	
+	// Partial loading - wallet only (for balance queries)
+	FindByID(id string) (*mapper.WalletData, error)
+	FindByUserID(userID string) ([]mapper.WalletData, error)
+	
+	// Cleanup
+	Delete(id string) error
+}
+
+// ChildEntitiesData - Contains all child entities for the aggregate
+type ChildEntitiesData struct {
+	IncomeRecords  []mapper.IncomeRecordData
+	ExpenseRecords []mapper.ExpenseRecordData
+	Transfers      []mapper.TransferData
+}
+
+// EnhancedWalletRepository - Single aggregate repository
+type EnhancedWalletRepository interface {
+	// Aggregate operations - handles entire aggregate boundary
+	Save(wallet *model.Wallet) error                    // Persists wallet + all loaded entities
+	FindByID(id string) (*model.Wallet, error)         // Loads wallet only (partial aggregate)
+	FindByIDWithTransactions(id string) (*model.Wallet, error) // Loads complete aggregate
+	
+	// Query operations
+	FindByUserID(userID string) ([]*model.Wallet, error)
+	
+	// Cleanup
+	Delete(id string) error
+}
+
+// ===== ENHANCED MAPPER =====
+
+// EnhancedWalletMapper - Handles aggregate + child entities
+type EnhancedWalletMapper struct {
+	incomeMapper   mapper.IncomeRecordMapper
+	expenseMapper  mapper.ExpenseRecordMapper
+	transferMapper mapper.TransferMapper
+}
+
+func (m *EnhancedWalletMapper) ToAggregateData(wallet *model.Wallet) (mapper.WalletData, ChildEntitiesData) {
+	walletData := mapper.WalletData{
+		ID:              wallet.ID,
+		UserID:          wallet.UserID,
+		Name:            wallet.Name,
+		Type:            string(wallet.Type),
+		Currency:        wallet.Currency(),
+		BalanceAmount:   wallet.Balance.Amount,
+		BalanceCurrency: wallet.Balance.Currency,
+		CreatedAt:       wallet.CreatedAt,
+		UpdatedAt:       wallet.UpdatedAt,
+	}
+	
+	childEntities := ChildEntitiesData{}
+	
+	// Convert child entities only if they're loaded
+	if wallet.IsFullyLoaded() {
+		// Convert income records
+		for _, income := range wallet.GetIncomeRecords() {
+			childEntities.IncomeRecords = append(childEntities.IncomeRecords, 
+				m.incomeMapper.ToData(income))
+		}
+		
+		// Convert expense records
+		for _, expense := range wallet.GetExpenseRecords() {
+			childEntities.ExpenseRecords = append(childEntities.ExpenseRecords, 
+				m.expenseMapper.ToData(expense))
+		}
+		
+		// Convert transfers
+		for _, transfer := range wallet.GetTransfers() {
+			childEntities.Transfers = append(childEntities.Transfers, 
+				m.transferMapper.ToData(transfer))
+		}
+	}
+	
+	return walletData, childEntities
+}
+
+func (m *EnhancedWalletMapper) ToDomain(walletData mapper.WalletData, childEntities *ChildEntitiesData) (*model.Wallet, error) {
+	// 1. Create base wallet
+	walletType, err := model.ParseWalletType(walletData.Type)
+	if err != nil {
+		return nil, err
+	}
+	
+	balance, err := model.NewMoney(walletData.BalanceAmount, walletData.BalanceCurrency)
+	if err != nil {
+		return nil, err
+	}
+	
+	wallet := &model.Wallet{
+		ID:        walletData.ID,
+		UserID:    walletData.UserID,
+		Name:      walletData.Name,
+		Type:      walletType,
+		Balance:   *balance,
+		CreatedAt: walletData.CreatedAt,
+		UpdatedAt: walletData.UpdatedAt,
+	}
+	
+	// 2. Load child entities if provided (complete aggregate)
+	if childEntities != nil {
+		// Load income records
+		for _, incomeData := range childEntities.IncomeRecords {
+			income, err := m.incomeMapper.ToDomain(incomeData)
+			if err != nil {
+				return nil, err
+			}
+			wallet.AddIncomeRecord(*income)
+		}
+		
+		// Load expense records
+		for _, expenseData := range childEntities.ExpenseRecords {
+			expense, err := m.expenseMapper.ToDomain(expenseData)
+			if err != nil {
+				return nil, err
+			}
+			wallet.AddExpenseRecord(*expense)
+		}
+		
+		// Load transfers
+		for _, transferData := range childEntities.Transfers {
+			transfer, err := m.transferMapper.ToDomain(transferData)
+			if err != nil {
+				return nil, err
+			}
+			wallet.AddTransfer(*transfer)
+		}
+		
+		wallet.SetFullyLoaded(true)
+	} else {
+		wallet.SetFullyLoaded(false)
+	}
+	
+	return wallet, nil
+}
+
+// ===== IMPLEMENTATION STRATEGY =====
+
+// 1. Enhanced WalletRepositoryImpl
+type EnhancedWalletRepositoryImpl struct {
+	peer   EnhancedWalletRepositoryPeer
+	mapper *EnhancedWalletMapper
+}
+
+func (r *EnhancedWalletRepositoryImpl) Save(wallet *model.Wallet) error {
+	// Convert aggregate to data structures
+	walletData, childEntities := r.mapper.ToAggregateData(wallet)
+	
+	// Persist through peer (handles transaction)
+	return r.peer.SaveAggregate(walletData, childEntities)
+}
+
+func (r *EnhancedWalletRepositoryImpl) FindByID(id string) (*model.Wallet, error) {
+	// Load wallet only (partial aggregate)
+	walletData, err := r.peer.FindByID(id)
+	if err != nil || walletData == nil {
+		return nil, err
+	}
+	
+	// Convert to domain (no child entities)
+	return r.mapper.ToDomain(*walletData, nil)
+}
+
+func (r *EnhancedWalletRepositoryImpl) FindByIDWithTransactions(id string) (*model.Wallet, error) {
+	// Load complete aggregate
+	walletData, childEntities, err := r.peer.FindAggregateByID(id)
+	if err != nil || walletData == nil {
+		return nil, err
+	}
+	
+	// Convert to domain (with child entities)
+	return r.mapper.ToDomain(*walletData, childEntities)
+}
+
+// ===== PEER IMPLEMENTATION =====
+
+// PostgreSQL implementation of enhanced peer
+type PGEnhancedWalletRepositoryPeer struct {
+	db TransactionManager
+}
+
+func (p *PGEnhancedWalletRepositoryPeer) SaveAggregate(walletData mapper.WalletData, childEntities ChildEntitiesData) error {
+	return p.db.WithTransaction(func(tx Transaction) error {
+		// 1. Upsert wallet
+		err := p.upsertWallet(tx, walletData)
+		if err != nil {
+			return err
+		}
+		
+		// 2. Delete existing child entities (if any)
+		err = p.deleteChildEntities(tx, walletData.ID)
+		if err != nil {
+			return err
+		}
+		
+		// 3. Insert new child entities
+		err = p.insertChildEntities(tx, walletData.ID, childEntities)
+		if err != nil {
+			return err
+		}
+		
+		return nil
+	})
+}
+
+func (p *PGEnhancedWalletRepositoryPeer) FindAggregateByID(id string) (*mapper.WalletData, *ChildEntitiesData, error) {
+	// Load wallet
+	walletData, err := p.FindByID(id)
+	if err != nil || walletData == nil {
+		return nil, nil, err
+	}
+	
+	// Load child entities
+	childEntities, err := p.loadChildEntities(id)
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	return walletData, childEntities, nil
+}
+
+func (p *PGEnhancedWalletRepositoryPeer) loadChildEntities(walletID string) (*ChildEntitiesData, error) {
+	childEntities := &ChildEntitiesData{}
+	
+	// Load income records
+	incomes, err := p.loadIncomeRecords(walletID)
+	if err != nil {
+		return nil, err
+	}
+	childEntities.IncomeRecords = incomes
+	
+	// Load expense records  
+	expenses, err := p.loadExpenseRecords(walletID)
+	if err != nil {
+		return nil, err
+	}
+	childEntities.ExpenseRecords = expenses
+	
+	// Load transfers
+	transfers, err := p.loadTransfers(walletID)
+	if err != nil {
+		return nil, err
+	}
+	childEntities.Transfers = transfers
+	
+	return childEntities, nil
+}
+
+// ===== PERFORMANCE CONSIDERATIONS =====
+
+// Lazy Loading Strategy
+// - FindByID(): Load wallet only (fast for balance queries)
+// - FindByIDWithTransactions(): Load complete aggregate (slower, for full operations)
+
+// Memory Optimization
+// - Only load child entities when explicitly requested
+// - Use streaming for large transaction histories
+// - Implement pagination for historical data
+
+// Transaction Boundaries
+// - Single transaction for aggregate save operations
+// - Proper rollback on any failure
+// - Optimistic concurrency control on wallet updates
