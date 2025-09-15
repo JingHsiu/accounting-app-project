@@ -19,6 +19,7 @@ type Router struct {
 	addExpenseController   *controller.AddExpenseController
 	addIncomeController    *controller.AddIncomeController
 	queryIncomeController  *controller.QueryIncomeController
+	queryExpenseController *controller.QueryExpenseController
 
 	// Category controllers
 	categoryController    *controller.CategoryController
@@ -34,6 +35,7 @@ func NewRouter(
 	addExpenseController *controller.AddExpenseController,
 	addIncomeController *controller.AddIncomeController,
 	queryIncomeController *controller.QueryIncomeController,
+	queryExpenseController *controller.QueryExpenseController,
 	categoryController *controller.CategoryController,
 	getCategoriesController *controller.GetCategoriesController,
 ) *Router {
@@ -46,6 +48,7 @@ func NewRouter(
 		addExpenseController:       addExpenseController,
 		addIncomeController:        addIncomeController,
 		queryIncomeController:      queryIncomeController,
+		queryExpenseController:     queryExpenseController,
 		categoryController:         categoryController,
 		getCategoriesController:    getCategoriesController,
 	}
@@ -71,7 +74,7 @@ func (r *Router) SetupRoutes() http.Handler {
 	mux.HandleFunc("/api/v1/categories/income", r.getCategoriesController.GetIncomeCategories)   // GET income categories
 
 	// Transaction endpoints
-	mux.HandleFunc("/api/v1/expenses", r.addExpenseController.AddExpense)
+	mux.HandleFunc("/api/v1/expenses", r.handleExpenses)
 	mux.HandleFunc("/api/v1/incomes", r.handleIncomes)
 
 	return mux
@@ -117,6 +120,18 @@ func (r *Router) handleIncomes(w http.ResponseWriter, req *http.Request) {
 		r.queryIncomeController.GetIncomes(w, req)
 	case http.MethodPost:
 		r.addIncomeController.AddIncome(w, req)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// handleExpenses routes requests to /api/v1/expenses
+func (r *Router) handleExpenses(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		r.queryExpenseController.GetExpenses(w, req)
+	case http.MethodPost:
+		r.addExpenseController.AddExpense(w, req)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}

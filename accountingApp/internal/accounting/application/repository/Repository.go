@@ -24,10 +24,13 @@ type WalletRepositoryPeer interface {
 	// Save 儲存錢包聚合狀態
 	Save(data mapper.WalletData) error
 
-	// FindByID 根據ID查找錢包聚合狀態
+	// FindByID 根據ID查找錢包聚合狀態（僅載入基本資料）
 	FindByID(id string) (*mapper.WalletData, error)
 
-	// FindByUserID 根據UserID查找用戶的所有錢包聚合狀態
+	// FindByIDWithChildEntities 根據ID查找錢包聚合狀態並完整載入所有子實體
+	FindByIDWithChildEntities(id string) (*mapper.WalletData, error)
+
+	// FindByUserID 根據UserID查找用戶的所有錢包聚合狀態（僅載入基本資料）
 	FindByUserID(userID string) ([]mapper.WalletData, error)
 
 	// Delete 根據ID刪除錢包聚合狀態

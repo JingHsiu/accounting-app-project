@@ -91,6 +91,17 @@ type GetIncomesInput struct {
 	Description  *string // Optional description search filter
 }
 
+type GetExpensesInput struct {
+	UserID       string
+	WalletID     *string // Optional filter
+	CategoryID   *string // Optional filter
+	StartDate    *time.Time // Optional date range filter
+	EndDate      *time.Time // Optional date range filter
+	MinAmount    *int64  // Optional amount range filter (in cents)
+	MaxAmount    *int64  // Optional amount range filter (in cents)
+	Description  *string // Optional description search filter
+}
+
 // Query Outputs (specialized outputs for queries that return data)
 type GetWalletOutput struct {
 	ID       string          `json:"id"`
@@ -155,6 +166,20 @@ type IncomeRecordData struct {
 	CreatedAt   string `json:"created_at"`  // ISO format
 }
 
+// Expense record structure for API responses
+type ExpenseRecordData struct {
+	ID            string `json:"id"`
+	WalletID      string `json:"wallet_id"`
+	SubcategoryID string `json:"subcategory_id"`
+	Amount        struct {
+		Amount   int64  `json:"amount"`   // Amount in cents
+		Currency string `json:"currency"`
+	} `json:"amount"`
+	Description string `json:"description"`
+	Date        string `json:"date"`        // ISO format
+	CreatedAt   string `json:"created_at"`  // ISO format
+}
+
 type GetExpenseCategoriesOutput struct {
 	ID         string          `json:"id"`
 	ExitCode   common.ExitCode `json:"exit_code"`
@@ -188,6 +213,18 @@ type GetIncomesOutput struct {
 func (o GetIncomesOutput) GetID() string                { return o.ID }
 func (o GetIncomesOutput) GetExitCode() common.ExitCode { return o.ExitCode }
 func (o GetIncomesOutput) GetMessage() string           { return o.Message }
+
+type GetExpensesOutput struct {
+	ID      string              `json:"id"`
+	ExitCode common.ExitCode    `json:"exit_code"`
+	Message string             `json:"message"`
+	Data    []ExpenseRecordData `json:"data,omitempty"`
+	Count   int                `json:"count"`
+}
+
+func (o GetExpensesOutput) GetID() string                { return o.ID }
+func (o GetExpensesOutput) GetExitCode() common.ExitCode { return o.ExitCode }
+func (o GetExpensesOutput) GetMessage() string           { return o.Message }
 
 // =============================================================================
 // USE CASE INTERFACES
@@ -260,4 +297,9 @@ type GetIncomeCategoriesUseCase interface {
 // GetIncomesUseCase defines the interface for querying income records
 type GetIncomesUseCase interface {
 	Execute(input GetIncomesInput) common.Output
+}
+
+// GetExpensesUseCase defines the interface for querying expense records
+type GetExpensesUseCase interface {
+	Execute(input GetExpensesInput) common.Output
 }

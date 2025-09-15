@@ -310,3 +310,26 @@ func (w *Wallet) GetMonthlyTotal(year int, month int) (expenses Money, incomes M
 	
 	return expenses, incomes
 }
+
+// LoadIncomeRecord 從持久化資料載入IncomeRecord到聚合 (不驗證業務規則)
+func (w *Wallet) LoadIncomeRecord(record IncomeRecord) error {
+	w.incomeRecords = append(w.incomeRecords, record)
+	return nil
+}
+
+// LoadExpenseRecord 從持久化資料載入ExpenseRecord到聚合 (不驗證業務規則) 
+func (w *Wallet) LoadExpenseRecord(record ExpenseRecord) error {
+	w.expenseRecords = append(w.expenseRecords, record)
+	return nil
+}
+
+// LoadTransfer 從持久化資料載入Transfer到聚合 (不驗證業務規則)
+func (w *Wallet) LoadTransfer(transfer Transfer) error {
+	w.transfers = append(w.transfers, transfer)
+	return nil
+}
+
+// MarkAsFullyLoaded 標記聚合為已載入所有子實體
+func (w *Wallet) MarkAsFullyLoaded() {
+	w.isFullyLoaded = true
+}

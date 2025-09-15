@@ -13,7 +13,9 @@ type GetIncomesService struct {
 }
 
 func NewGetIncomesService(walletRepo repository.WalletRepository) *GetIncomesService {
-	return &GetIncomesService{walletRepo: walletRepo}
+	return &GetIncomesService{
+		walletRepo: walletRepo,
+	}
 }
 
 func (s *GetIncomesService) Execute(input usecase.GetIncomesInput) common.Output {
@@ -38,13 +40,21 @@ func (s *GetIncomesService) Execute(input usecase.GetIncomesInput) common.Output
 	}
 
 	// Collect income records from all wallets
-	var allIncomeRecords []usecase.IncomeRecordData
+	allIncomeRecords := make([]usecase.IncomeRecordData, 0)
 
 	for _, wallet := range wallets {
-		// Get income records for this wallet
-		incomeRecords := wallet.GetIncomeRecords()
+		// Load wallet with transactions to get complete aggregate
+		fullyLoadedWallet, err := s.walletRepo.FindByIDWithTransactions(wallet.ID)
+		if err != nil {
+			// Fallback to basic wallet if transaction loading fails
+			fullyLoadedWallet = wallet
+		}
 		
-		for _, record := range incomeRecords {
+		// Get income records from fully loaded wallet aggregate
+		incomeRecords := fullyLoadedWallet.GetIncomeRecords()
+		
+		for i := range incomeRecords {
+			record := &incomeRecords[i]
 			// Apply filters
 			if input.WalletID != nil && *input.WalletID != record.WalletID {
 				continue

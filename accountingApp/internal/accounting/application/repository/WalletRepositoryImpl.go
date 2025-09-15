@@ -62,26 +62,18 @@ func (r *WalletRepositoryImpl) Delete(id string) error {
 
 // FindByIDWithTransactions 根據ID查找錢包及所有交易記錄 (載入完整聚合)
 func (r *WalletRepositoryImpl) FindByIDWithTransactions(id string) (*model.Wallet, error) {
-	// 1. 透過基本Repository方法取得錢包
-	wallet, err := r.FindByID(id)
-	if err != nil || wallet == nil {
-		return wallet, err
+	// 透過peer介面載入完整聚合（包含所有子實體）
+	aggregateData, err := r.peer.FindByIDWithChildEntities(id)
+	if err != nil {
+		return nil, err
 	}
 
-	// 2. 載入交易記錄 (從相關的交易表中查詢)
-	// TODO: 實際實作需要查詢 expenses, incomes, transfers 表
-	// 目前先標記為已載入，避免編譯錯誤
-	//
-	// 未來的實作應該包含:
-	// - 查詢 expenses 表: WHERE wallet_id = $1
-	// - 查詢 incomes 表: WHERE wallet_id = $1
-	// - 查詢 transfers 表: WHERE from_wallet_id = $1 OR to_wallet_id = $1
-	// - 將查詢結果透過 mapper 轉換成 domain model
-	// - 使用 wallet.AddExpenseRecord(), wallet.AddIncomeRecord(), wallet.AddTransfer() 載入
+	if aggregateData == nil {
+		return nil, nil // 聚合不存在
+	}
 
-	wallet.SetFullyLoaded(true)
-
-	return wallet, nil
+	// 使用AggregateMapper: AggregateData → Domain Aggregate (含子實體)
+	return r.mapper.ToDomain(*aggregateData)
 }
 
 // FindByUserID 根據UserID查找用戶的所有錢包
